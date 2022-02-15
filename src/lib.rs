@@ -1,14 +1,15 @@
+mod error;
+mod promts;
+
+pub use promts::confirmation::confirmation;
+pub use promts::input::input;
+
 use crossterm::{
     cursor::SavePosition,
     queue,
     style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
     terminal::{disable_raw_mode, enable_raw_mode, is_raw_mode_enabled},
 };
-
-mod error;
-mod input;
-
-pub use input::input;
 
 pub(crate) fn draw_promt<W>(
     buffer: &mut W,
@@ -22,7 +23,7 @@ where
         buffer,
         SetAttribute(Attribute::Bold),
         SetForegroundColor(Color::Green),
-        Print("?".to_string()),
+        Print("? ".to_string()),
         ResetColor
     )
     .unwrap_or_default();

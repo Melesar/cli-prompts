@@ -7,8 +7,13 @@ fn main() {
         .esc_interrupts(true)
         .show(&mut stdout);
 
+    let is_confirmed = cli_promts::confirmation()
+        .show(&mut stdout, "Do you want a cookie?")
+        .unwrap_or(false);
+
     println!(
-        "{}",
-        result.unwrap_or("Error occured while providing input".into())
-    )
+        "Input: {}, confirmation: {}",
+        result.unwrap_or("Error occured while providing input".into()),
+        is_confirmed
+    );
 }
