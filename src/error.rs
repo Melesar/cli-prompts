@@ -1,6 +1,6 @@
 #[derive(Debug)]
 pub enum Error {
-    InvalidInput,
+    Interrupted,
     IoError(std::io::Error),
 }
 

@@ -10,7 +10,7 @@ use crossterm::{
     terminal::{Clear, ClearType},
 };
 
-pub fn input<F>(label: &str, validation: Option<F>) -> InputPromt {
+pub fn input(label: &str) -> InputPromt {
     InputPromt::new(label)
 }
 
@@ -21,14 +21,14 @@ pub struct InputPromt {
 }
 
 impl InputPromt {
-    pub fn show<W>(mut self, buffer: &mut W) -> Result<String, Error>
+    pub fn show<W>(self, buffer: &mut W) -> Result<String, Error>
     where
         W: Write,
     {
-        self.show_validated(buffer, |s| Ok(()))
+        self.show_validated(buffer, |_| Ok(()))
     }
 
-    pub fn show_validated<W, F>(mut self, buffer: &mut W, validation: F) -> Result<String, Error>
+    pub fn show_validated<W, F>(self, buffer: &mut W, validation: F) -> Result<String, Error>
     where
         W: Write,
         F: Fn(&str) -> Result<(), String>,
@@ -38,7 +38,7 @@ impl InputPromt {
         let raw_mode = RawMode::ensure();
 
         let mut input = String::new();
-        let mut result: Result<String, String> = self
+        let mut result = self
             .default_value
             .clone()
             .ok_or(String::new())
@@ -56,12 +56,33 @@ impl InputPromt {
                 Event::Key(k) => match k.code {
                     KeyCode::Char(c) => {
                         input.push(c);
-                        // result = self
-                        //     .validation
-                        //     .map_or_else(|| Ok(input), |v| v(&input).and_then(|_| Ok(input)));
+                        result = validation(&input).map(|_| input.clone());
+                        execute!(
+                            buffer,
+                            RestorePosition,
+                            Clear(ClearType::UntilNewLine),
+                            Print(&input)
+                        )
+                        .unwrap_or_default();
                     }
-                    KeyCode::Backspace => (),
-                    KeyCode::Enter => (),
+                    KeyCode::Backspace => {
+                        input.pop();
+                        result = validation(&input).map(|_| input.clone());
+                        execute!(
+                            buffer,
+                            RestorePosition,
+                            Clear(ClearType::UntilNewLine),
+                            Print(&input)
+                        )
+                        .unwrap_or_default();
+                    }
+                    KeyCode::Enter => match result.as_ref() {
+                        Ok(_) => break,
+                        Err(e) => {
+                            input.clear();
+                            display_error(buffer, e)
+                        }
+                    },
                     KeyCode::Esc if self.esc_interrupts => {
                         result = Err(String::new());
                         break;
@@ -72,7 +93,22 @@ impl InputPromt {
             }
         }
 
-        raw_mode.drop();
+        drop(raw_mode);
+
+        if let Ok(r) = result.as_ref() {
+            execute!(
+                buffer,
+                RestorePosition,
+                Clear(ClearType::UntilNewLine),
+                SetForegroundColor(Color::DarkCyan),
+                Print(r),
+                Print('\n'),
+                ResetColor
+            )
+            .unwrap_or_default();
+        }
+
+        result.map_err(|_| Error::Interrupted)
     }
 
     pub fn default_value(mut self, val: String) -> Self {
@@ -92,4 +128,22 @@ impl InputPromt {
             esc_interrupts: false,
         }
     }
+}
+
+fn display_error<W>(buffer: &mut W, error: &String)
+where
+    W: Write,
+{
+    queue!(buffer, RestorePosition, Clear(ClearType::UntilNewLine)).unwrap_or_default();
+    queue!(
+        buffer,
+        Print(" "),
+        SetForegroundColor(Color::Red),
+        Print(format!("[{}]", error)),
+        ResetColor
+    )
+    .unwrap_or_default();
+    queue!(buffer, RestorePosition).unwrap_or_default();
+
+    buffer.flush().unwrap_or_default();
 }
