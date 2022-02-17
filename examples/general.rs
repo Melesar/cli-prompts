@@ -1,19 +1,26 @@
 use cli_promts;
 
-fn main() {
+fn main() -> Result<(), cli_promts::error::Error> {
     let mut stdout = std::io::stdout();
-    let result = cli_promts::input("Hello")
-        .default_value("World".into())
-        .esc_interrupts(true)
-        .show(&mut stdout);
 
-    let is_confirmed = cli_promts::confirmation()
-        .show(&mut stdout, "Do you want a cookie?")
-        .unwrap_or(false);
+    let cities = [
+        "Warsaw",
+        "Berlin",
+        "Zurich",
+        "Milano",
+        "Montreal",
+        "New Yourk",
+        "Singapoure",
+        "Tokio",
+        "Sydney",
+        "Cairo",
+    ]
+    .map(|s| s.to_string());
 
-    println!(
-        "Input: {}, confirmation: {}",
-        result.unwrap_or("Error occured while providing input".into()),
-        is_confirmed
-    );
+    let name = cli_promts::input("Hi! Please enter your name").show(&mut stdout)?;
+    let city = cli_promts::select_one("Which city do you live in?", cities.into_iter())
+        .show(&mut stdout)?;
+    let like_cats = cli_promts::confirmation().show(&mut stdout, "Do you like cats?");
+
+    Ok(())
 }

@@ -1,8 +1,9 @@
-mod error;
+pub mod error;
 mod promts;
 
 pub use promts::confirmation::confirmation;
 pub use promts::input::input;
+pub use promts::selection::select_one;
 
 use crossterm::{
     cursor::SavePosition,
@@ -15,7 +16,7 @@ pub(crate) fn draw_promt<W>(
     buffer: &mut W,
     label: &str,
     default_value: &Option<String>,
-) -> Result<(), error::Error>
+) -> error::Result<()>
 where
     W: std::io::Write,
 {
@@ -48,7 +49,7 @@ where
         .unwrap_or_default();
     }
 
-    buffer.flush().map_err(|err| err.into())
+    buffer.flush().map_err(|e| e.into())
 }
 
 pub(crate) struct RawMode(bool);

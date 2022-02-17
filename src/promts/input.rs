@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::{Error, Result};
 use crate::RawMode;
 use std::io::Write;
 
@@ -21,17 +21,17 @@ pub struct InputPromt {
 }
 
 impl InputPromt {
-    pub fn show<W>(self, buffer: &mut W) -> Result<String, Error>
+    pub fn show<W>(self, buffer: &mut W) -> Result<String>
     where
         W: Write,
     {
         self.show_validated(buffer, |_| Ok(()))
     }
 
-    pub fn show_validated<W, F>(self, buffer: &mut W, validation: F) -> Result<String, Error>
+    pub fn show_validated<W, F>(self, buffer: &mut W, validation: F) -> Result<String>
     where
         W: Write,
-        F: Fn(&str) -> Result<(), String>,
+        F: Fn(&str) -> std::result::Result<(), String>,
     {
         crate::draw_promt(buffer, &self.label, &self.default_value)?;
 
