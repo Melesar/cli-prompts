@@ -1,6 +1,5 @@
 use crate::error::Result;
 use crate::{draw_promt, RawMode};
-use std::thread::current;
 use std::{fmt::Display, io::Write};
 
 const DEFAULT_OPTIONS_COUNT: usize = 5;

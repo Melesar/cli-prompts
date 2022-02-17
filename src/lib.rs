@@ -1,9 +1,11 @@
-pub mod error;
 mod promts;
+pub mod error;
 
 pub use promts::confirmation::confirmation;
 pub use promts::input::input;
 pub use promts::selection::select_one;
+
+use error::Result;
 
 use crossterm::{
     cursor::SavePosition,
@@ -16,7 +18,7 @@ pub(crate) fn draw_promt<W>(
     buffer: &mut W,
     label: &str,
     default_value: &Option<String>,
-) -> error::Result<()>
+) -> Result<()>
 where
     W: std::io::Write,
 {
@@ -26,18 +28,16 @@ where
         SetForegroundColor(Color::Green),
         Print("? ".to_string()),
         ResetColor
-    )
-    .unwrap_or_default();
+    )?;
 
     queue!(
         buffer,
         SetAttribute(Attribute::Bold),
         Print(format!("{}: ", label)),
         SetAttribute(Attribute::Reset)
-    )
-    .unwrap_or_default();
+    )?;
 
-    queue!(buffer, SavePosition).unwrap_or_default();
+    queue!(buffer, SavePosition)?;
 
     if let Some(default) = default_value {
         queue!(
@@ -45,8 +45,7 @@ where
             SetForegroundColor(Color::DarkGrey),
             Print(format!("[{}]", default)),
             ResetColor
-        )
-        .unwrap_or_default();
+        )?;
     }
 
     buffer.flush().map_err(|e| e.into())

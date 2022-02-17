@@ -1,4 +1,5 @@
 use std::io::Write;
+use crate::error::Result;
 
 use crate::draw_promt;
 
@@ -11,7 +12,7 @@ pub struct Confirmation {
 }
 
 impl Confirmation {
-    pub fn show<W>(self, buffer: &mut W, label: &str) -> Result<bool, crate::error::Error>
+    pub fn show<W>(self, buffer: &mut W, label: &str) -> Result<bool>
     where
         W: Write,
     {
