@@ -1,9 +1,14 @@
+#![allow(dead_code)]
+
 mod promts;
 pub mod error;
 
 pub use promts::confirmation::confirmation;
 pub use promts::input::input;
 pub use promts::selection::select_one;
+
+pub use promts::refresh::input::Input;
+pub use promts::refresh::display_prompt;
 
 use error::Result;
 
