@@ -8,6 +8,7 @@ use crossterm::{
 use std::io::Write;
 
 use super::{AbortReason, EventOutcome, Prompt};
+use crate::output::draw_prompt;
 
 pub struct Input<F> {
     label: String,
@@ -51,22 +52,7 @@ where
         )
         .unwrap();
 
-        queue!(
-            buffer,
-            SetAttribute(Attribute::Bold),
-            SetForegroundColor(Color::Green),
-            Print("? ".to_string()),
-            ResetColor
-        )
-        .unwrap();
-
-        queue!(
-            buffer,
-            SetAttribute(Attribute::Bold),
-            Print(format!("{}: ", self.label)),
-            SetAttribute(Attribute::Reset)
-        )
-        .unwrap();
+        draw_prompt(buffer, &self.label);
 
         if self.error.is_some() {
             queue!(

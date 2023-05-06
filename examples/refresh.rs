@@ -8,11 +8,13 @@ fn validation(input: &str) -> Result<u32, String> {
 
 fn main() {
     let input_prompt =
-        cli_prompts::Input::new("Enter your name", validation).default_value(String::from("John"));
+        cli_prompts::Input::new("Enter your name", |s| Ok(s.to_string())).default_value(String::from("John"));
+    let confirmation = cli_prompts::Confirmation::new("Do you want a cup of coffee?").default_positive(true);
 
     let mut stdout = stdout();
-    match display_prompt(input_prompt, &mut stdout) {
-        Ok(result) => println!("Prompt result: {}", result),
-        Err(error) => println!("Prompt failed: {:?}", error),
-    }
+    let name = display_prompt(input_prompt, &mut stdout);
+    let is_coffee = display_prompt(confirmation, &mut stdout);
+
+    println!("Name: {:?}", name);
+    println!("Is coffee: {:?}", is_coffee);
 }

@@ -1,4 +1,5 @@
 pub mod input;
+pub mod confirmation;
 
 use std::io::Write;
 
