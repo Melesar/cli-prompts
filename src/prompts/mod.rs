@@ -1,6 +1,10 @@
 pub mod input;
 pub mod confirmation;
-pub mod selection;
+
+mod options;
+
+pub use options::selection;
+pub use options::multiselect;
 
 use std::io::Write;
 

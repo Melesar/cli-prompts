@@ -1,26 +1,66 @@
-use cli_prompts;
+use std::io::stdout;
 
-fn main() -> Result<(), cli_prompts::error::Error> {
-    let mut stdout = std::io::stdout();
+use cli_prompts::{display_prompt, Input};
 
-    let cities = [
-        "Warsaw",
-        "Berlin",
-        "Zurich",
-        "Milano",
-        "Montreal",
-        "New Yourk",
-        "Singapoure",
-        "Tokio",
-        "Sydney",
-        "Cairo",
-    ]
-    .map(|s| s.to_string());
+#[derive(Debug)]
+enum CarModel {
+    Audi,
+    BMW,
+    Chevrolet,
+}
 
-    let name = cli_prompts::input("Hi! Please enter your name").show(&mut stdout)?;
-    let city = cli_prompts::select_one("Which city do you live in?", cities.into_iter())
-        .show(&mut stdout)?;
-    let like_cats = cli_prompts::confirmation().show(&mut stdout, "Do you like cats?");
+fn car_to_string(car: &CarModel) -> String {
+    match car {
+        CarModel::Audi => "Audi A3".into(),
+        CarModel::BMW => "BMW X5".into(),
+        CarModel::Chevrolet => "Chevrolet 11".into(),
+    }
+}
 
-    Ok(())
+fn main() {
+    let desserts = [
+        "Tiramisu",
+        "Cheesecake",
+        "Brownee",
+        "Cookie",
+        "Jelly",
+        "Chupa-Chups",
+        "Pudding",
+    ];
+    let subjects = [
+        "Physics",
+        "Math",
+        "Polish",
+        "English",
+        "Sport",
+        "Geography",
+        "History"
+    ];
+    let cars = [CarModel::Audi, CarModel::BMW, CarModel::Chevrolet];
+
+    let input_prompt = cli_prompts::Input::new("Enter your name", |s| Ok(s.to_string()))
+        .default_value(String::from("John"));
+    let confirmation =
+        cli_prompts::Confirmation::new("Do you want a cup of coffee?").default_positive(true);
+    let dessert_selection =
+        cli_prompts::Selection::new("Your favoite dessert", desserts.into_iter());
+    let car_selection = cli_prompts::Selection::new_with_transformation(
+        "Your car model",
+        cars.into_iter(),
+        car_to_string,
+    );
+    let subjects_selection = cli_prompts::Multiselect::new("What are your favourite subjects", subjects.into_iter());
+
+    let mut stdout = stdout();
+    let name = display_prompt(input_prompt, &mut stdout);
+    let is_coffee = display_prompt(confirmation, &mut stdout);
+    let dessert = display_prompt(dessert_selection, &mut stdout);
+    let car = display_prompt(car_selection, &mut stdout);
+    let subjects = display_prompt(subjects_selection, &mut stdout);
+
+    println!("Name: {:?}", name);
+    println!("Is coffee: {:?}", is_coffee);
+    println!("Dessert: {:?}", dessert);
+    println!("Car: {:?}", car);
+    println!("Subjects: {:?}", subjects);
 }

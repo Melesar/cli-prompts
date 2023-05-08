@@ -8,6 +8,7 @@ pub mod error;
 pub use prompts::input::Input;
 pub use prompts::confirmation::Confirmation;
 pub use prompts::selection::Selection;
+pub use prompts::multiselect::Multiselect;
 pub use prompts::display_prompt;
 
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, is_raw_mode_enabled};
