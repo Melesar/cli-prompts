@@ -10,6 +10,7 @@ pub use promts::selection::select_one;
 
 pub use promts::refresh::input::Input;
 pub use promts::refresh::confirmation::Confirmation;
+pub use promts::refresh::selection::Selection;
 pub use promts::refresh::display_prompt;
 
 use error::Result;

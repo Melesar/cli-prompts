@@ -1,5 +1,6 @@
 pub mod input;
 pub mod confirmation;
+pub mod selection;
 
 use std::io::Write;
 
