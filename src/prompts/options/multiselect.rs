@@ -84,38 +84,40 @@ impl<T> MultiOptionPrompt<T> for Multiselect<T> {
         option_index: usize,
         option_label: &str,
         is_selected: bool,
-    ) {
+    ) -> Result<(), std::io::Error> {
         if is_selected {
-            queue!(buffer, SetForegroundColor(Color::DarkGreen)).unwrap();
+            queue!(buffer, SetForegroundColor(Color::DarkGreen))?;
         }
-        queue!(buffer, Print("[")).unwrap();
+        queue!(buffer, Print("["))?;
         if self.selected_options.contains(&option_index) {
-            queue!(buffer, Print("x")).unwrap();
+            queue!(buffer, Print("x"))?;
         } else {
-            queue!(buffer, Print(" ")).unwrap();
+            queue!(buffer, Print(" "))?;
         }
-        queue!(buffer, Print("] ")).unwrap();
-        queue!(buffer, Print(option_label)).unwrap();
+        queue!(buffer, Print("] "))?;
+        queue!(buffer, Print(option_label))?;
 
         if is_selected {
-            queue!(buffer, SetForegroundColor(Color::Reset)).unwrap();
+            queue!(buffer, SetForegroundColor(Color::Reset))?;
         }
+
+        Ok(())
     }
 
-    fn draw_header<W: Write>(&self, buffer: &mut W, is_submitted: bool) {
+    fn draw_header<W: Write>(&self, buffer: &mut W, is_submitted: bool) -> Result<(), std::io::Error> {
         if is_submitted {
-            queue!(buffer, SetForegroundColor(Color::DarkGreen)).unwrap();
+            queue!(buffer, SetForegroundColor(Color::DarkGreen))?;
             for (i, selected_index) in self.selected_options.iter().enumerate() {
                 let selected_option = &self.options.transformed_options()[*selected_index];
-                queue!(buffer, Print(selected_option)).unwrap();
+                queue!(buffer, Print(selected_option))?;
 
                 if i < self.selected_options.len() - 1 {
-                    queue!(buffer, Print(", ")).unwrap();
+                    queue!(buffer, Print(", "))?;
                 }
             }
-            queue!(buffer, SetForegroundColor(Color::Reset)).unwrap();
+            queue!(buffer, SetForegroundColor(Color::Reset))?;
         } else {
-            queue!(buffer, Print(&self.filter), Print(" ")).unwrap();
+            queue!(buffer, Print(&self.filter), Print(" "))?;
             if let Some(help_message) = self.help_message.as_ref() {
                 queue!(
                     buffer,
@@ -124,16 +126,17 @@ impl<T> MultiOptionPrompt<T> for Multiselect<T> {
                     Print(help_message),
                     Print("]"),
                     SetForegroundColor(Color::Reset)
-                )
-                .unwrap();
+                )?;
             }
         }
+
+        Ok(())
     }
 }
 
 impl<T> Prompt<Vec<T>> for Multiselect<T> {
-    fn draw<W: std::io::Write>(&self, buffer: &mut W) {
-        self.draw_multioption(buffer, &self.label, self.is_submitted);
+    fn draw<W: std::io::Write>(&self, buffer: &mut W) -> Result<(), std::io::Error>{
+        self.draw_multioption(buffer, &self.label, self.is_submitted)
     }
 
     fn on_event(&mut self, evt: Event) -> EventOutcome<Vec<T>> {

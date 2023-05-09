@@ -44,15 +44,14 @@ impl<TOut, F> Prompt<TOut> for Input<F>
 where
     F: Fn(&str) -> Result<TOut, String>,
 {
-    fn draw<W: Write>(&self, buffer: &mut W) {
+    fn draw<W: Write>(&self, buffer: &mut W) -> Result<(), std::io::Error> {
         queue!(
             buffer,
             Clear(ClearType::CurrentLine),
-            MoveTo(0, position().unwrap().1)
-        )
-        .unwrap();
+            MoveTo(0, position()?.1)
+        )?;
 
-        draw_prompt(buffer, &self.label);
+        draw_prompt(buffer, &self.label)?;
 
         if self.error.is_some() {
             queue!(
@@ -61,29 +60,27 @@ where
                 SetForegroundColor(Color::Red),
                 Print(format!("[{}]", self.error.as_ref().unwrap())),
                 ResetColor
-            )
-            .unwrap();
+            )?;
         } else if self.is_submitted {
             queue!(
                 buffer,
                 SetForegroundColor(Color::Green),
                 Print(format!("{}\r\n", self.input)),
                 ResetColor,
-            )
-            .unwrap();
+            )?;
         } else if self.is_first_input && self.input.len() > 0 {
             queue!(
                 buffer,
                 SetForegroundColor(Color::DarkGrey),
                 Print(format!("[{}]", self.input)),
                 ResetColor,
-            )
-            .unwrap();
+            )?;
         } else if !self.is_first_input {
-            queue!(buffer, Print(format!("{}", self.input))).unwrap();
+            queue!(buffer, Print(format!("{}", self.input)))?;
         }
 
-        buffer.flush().unwrap_or_default();
+        buffer.flush()?;
+        Ok(())
     }
 
     fn on_event(&mut self, evt: Event) -> super::EventOutcome<TOut> {

@@ -31,13 +31,12 @@ impl Confirmation {
 }
 
 impl Prompt<bool> for Confirmation {
-    fn draw<W: Write>(&self, buffer: &mut W) {
+    fn draw<W: Write>(&self, buffer: &mut W) -> Result<(), std::io::Error> {
         queue!(
             buffer,
             Clear(ClearType::CurrentLine),
-            MoveTo(0, position().unwrap().1)
-        )
-        .unwrap();
+            MoveTo(0, position()?.1)
+        )?;
         
         draw_prompt(
             buffer,
@@ -47,7 +46,7 @@ impl Prompt<bool> for Confirmation {
                 y = if self.default_positive { 'Y' } else { 'y' },
                 n = if !self.default_positive { 'N' } else { 'n' },
             ),
-        );
+        )?;
 
         let result = if let Some(is_positive) = self.selected_option.as_ref() {
             if *is_positive { "Yes" } else { "No" }
@@ -56,16 +55,17 @@ impl Prompt<bool> for Confirmation {
         };
 
         if self.is_submitted {
-            queue!(buffer, SetForegroundColor(Color::Green)).unwrap();
+            queue!(buffer, SetForegroundColor(Color::Green))?;
         }
 
-        queue!(buffer, Print(result), ResetColor).unwrap();
+        queue!(buffer, Print(result), ResetColor)?;
 
         if self.is_submitted {
-            queue!(buffer, Print("\r\n")).unwrap();
+            queue!(buffer, Print("\r\n"))?;
         }
 
-        buffer.flush().unwrap_or_default();
+        buffer.flush()?;
+        Ok(())
     }
 
     fn on_event(&mut self, evt: Event) -> EventOutcome<bool> {

@@ -26,7 +26,7 @@ pub enum EventOutcome<T> {
 }
 
 pub trait Prompt<TOut> {
-    fn draw<W: Write>(&self, buffer: &mut W);
+    fn draw<W: Write>(&self, buffer: &mut W) -> Result<(), std::io::Error>;
     fn on_event(&mut self, evt: Event) -> EventOutcome<TOut>;
 }
 
@@ -37,19 +37,23 @@ where
 {
     let _raw = RawMode::ensure();
     loop {
-        prompt.draw(buffer);
+        prompt.draw(buffer)?;
         match read() {
             Ok(evt) => match prompt.on_event(evt) {
                 EventOutcome::Done(result) => {
-                    prompt.draw(buffer);
+                    prompt.draw(buffer)?;
                     return Ok(result);
                 },
                 EventOutcome::Continue => continue,
                 EventOutcome::Abort(reason) => return Err(reason),
             },
-            Err(error) => return Err(AbortReason::Error(error))
+            Err(error) => return Err(error.into())
         }
     }
 }
 
-
+impl From<std::io::Error> for AbortReason {
+    fn from(error: std::io::Error) -> Self {
+        AbortReason::Error(error)
+    }
+}

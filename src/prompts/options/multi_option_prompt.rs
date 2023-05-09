@@ -24,17 +24,17 @@ pub trait MultiOptionPrompt<T> {
         option_index: usize,
         option_label: &str,
         is_selected: bool,
-    );
+    ) -> Result<(), std::io::Error>;
 
-    fn draw_header<W: Write>(&self, buffer: &mut W, is_submitted: bool);
+    fn draw_header<W: Write>(&self, buffer: &mut W, is_submitted: bool) -> Result<(), std::io::Error>;
 
-    fn draw_multioption<W: Write>(&self, buffer: &mut W, label: &str, is_submitted: bool) {
-        queue!(buffer, Clear(ClearType::CurrentLine)).unwrap();
+    fn draw_multioption<W: Write>(&self, buffer: &mut W, label: &str, is_submitted: bool) -> Result<(), std::io::Error>{
+        queue!(buffer, Clear(ClearType::CurrentLine))?;
 
-        draw_prompt(buffer, label);
-        self.draw_header(buffer, is_submitted);
+        draw_prompt(buffer, label)?;
+        self.draw_header(buffer, is_submitted)?;
 
-        queue!(buffer, Print("\r\n")).unwrap();
+        queue!(buffer, Print("\r\n"))?;
 
         if !is_submitted {
             let max_options_count: usize = self.max_options_count().into();
@@ -63,28 +63,30 @@ pub trait MultiOptionPrompt<T> {
                 let is_selected = selection_index == self.currently_selected_index();
                 let option_label = &self.options().transformed_options()[*option_index];
 
-                queue!(buffer, Clear(ClearType::CurrentLine)).unwrap();
-                self.draw_option(buffer, *option_index, option_label, is_selected);
-                queue!(buffer, Print("\r\n")).unwrap();
+                queue!(buffer, Clear(ClearType::CurrentLine))?;
+                self.draw_option(buffer, *option_index, option_label, is_selected)?;
+                queue!(buffer, Print("\r\n"))?;
             }
 
             for _ in num_displayed_options..self.max_options_count().into() {
-                queue!(buffer, Clear(ClearType::CurrentLine), MoveToNextLine(1)).unwrap();
+                queue!(buffer, Clear(ClearType::CurrentLine), MoveToNextLine(1))?;
             }
 
-            queue!(buffer, MoveToPreviousLine(self.max_options_count() + 1)).unwrap();
+            queue!(buffer, MoveToPreviousLine(self.max_options_count() + 1))?;
         } else {
             clear_options(buffer, self.max_options_count());
         }
 
-        buffer.flush().unwrap_or_default();
+        buffer.flush()?;
+        Ok(())
     }
 }
 
-fn clear_options<W: Write>(buffer: &mut W, count: u16) {
+fn clear_options<W: Write>(buffer: &mut W, count: u16) -> Result<(), std::io::Error>{
     for _ in 0..count {
-        queue!(buffer, Clear(ClearType::CurrentLine), MoveToNextLine(1)).unwrap();
+        queue!(buffer, Clear(ClearType::CurrentLine), MoveToNextLine(1))?;
     }
 
-    queue!(buffer, MoveToPreviousLine(count)).unwrap();
+    queue!(buffer, MoveToPreviousLine(count))?;
+    Ok(())
 }

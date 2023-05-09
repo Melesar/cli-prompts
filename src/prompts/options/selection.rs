@@ -74,12 +74,12 @@ impl<T> MultiOptionPrompt<T> for Selection<T> {
         self.current_selection
     }
 
-    fn draw_option<W: Write>(&self, buffer: &mut W, _: usize, option_label: &str, is_selected: bool) {
+    fn draw_option<W: Write>(&self, buffer: &mut W, _: usize, option_label: &str, is_selected: bool) -> Result<(), std::io::Error>{
         let prefix = if is_selected { "> " } else { "  " };
 
-        queue!(buffer, Clear(ClearType::CurrentLine)).unwrap();
+        queue!(buffer, Clear(ClearType::CurrentLine))?;
         if is_selected {
-            queue!(buffer, SetAttribute(Attribute::Bold)).unwrap();
+            queue!(buffer, SetAttribute(Attribute::Bold))?;
         }
 
         queue!(
@@ -87,29 +87,30 @@ impl<T> MultiOptionPrompt<T> for Selection<T> {
             Print(prefix),
             Print(option_label),
             SetAttribute(Attribute::Reset),
-        )
-        .unwrap();
+        )?;
+        Ok(())
     }
 
-    fn draw_header<W: Write>(&self, buffer: &mut W, is_submitted: bool) {
+    fn draw_header<W: Write>(&self, buffer: &mut W, is_submitted: bool) -> Result<(), std::io::Error>{
         if is_submitted {
-            queue!(buffer, SetForegroundColor(Color::Green)).unwrap();
+            queue!(buffer, SetForegroundColor(Color::Green))?;
             let selected_option_index = self.options.filtered_options()[self.current_selection];
             queue!(
                 buffer,
                 Print(&self.options.transformed_options()[selected_option_index]),
                 SetForegroundColor(Color::Reset)
-            )
-            .unwrap();
+            )?;
         } else {
-            queue!(buffer, Print(&self.current_filter)).unwrap();
+            queue!(buffer, Print(&self.current_filter))?;
         }
+
+        Ok(())
     }
 }
 
 impl<T> Prompt<T> for Selection<T> {
-    fn draw<W: Write>(&self, buffer: &mut W) {
-        self.draw_multioption(buffer, &self.label, self.is_submitted);
+    fn draw<W: Write>(&self, buffer: &mut W) -> Result<(), std::io::Error>{
+        self.draw_multioption(buffer, &self.label, self.is_submitted)
     }
 
     fn on_event(&mut self, evt: Event) -> EventOutcome<T> {
