@@ -39,7 +39,8 @@ fn main() {
     let cars = [CarModel::Audi, CarModel::BMW, CarModel::Chevrolet];
 
     let input_prompt = cli_prompts::Input::new("Enter your name", |s| Ok(s.to_string()))
-        .default_value(String::from("John"));
+        .default_value("John")
+        .help_message("Please provide your real name");
     let confirmation =
         cli_prompts::Confirmation::new("Do you want a cup of coffee?").default_positive(true);
     let dessert_selection =

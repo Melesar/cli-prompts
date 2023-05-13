@@ -13,6 +13,7 @@ use crate::output::draw_prompt;
 pub struct Input<F> {
     label: String,
     input: String,
+    help_message: Option<String>,
     is_first_input: bool,
     is_submitted: bool,
     error: Option<String>,
@@ -27,6 +28,7 @@ where
         Self {
             label: label.into(),
             input: String::new(),
+            help_message: None,
             is_first_input: true,
             is_submitted: false,
             error: None,
@@ -34,8 +36,13 @@ where
         }
     }
 
-    pub fn default_value(mut self, val: String) -> Self {
-        self.input = val;
+    pub fn help_message<S: Into<String>>(mut self, message: S) -> Self {
+        self.help_message = Some(message.into());
+        self
+    }
+
+    pub fn default_value<S: Into<String>>(mut self, val: S) -> Self {
+        self.input = val.into();
         self
     }
 }
@@ -77,6 +84,17 @@ where
             )?;
         } else if !self.is_first_input {
             queue!(buffer, Print(format!("{}", self.input)))?;
+        }
+
+        if let Some(help_message) = self.help_message.as_ref() {
+            queue!(
+                buffer,
+                SetForegroundColor(Color::DarkGreen),
+                Print(" ["),
+                Print(help_message),
+                Print("]"),
+                SetForegroundColor(Color::Reset)
+            )?;
         }
 
         buffer.flush()?;
