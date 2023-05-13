@@ -95,6 +95,7 @@ impl Prompt<bool> for Confirmation {
                     self.selected_option = None;
                     EventOutcome::Continue
                 },
+                KeyCode::Esc => EventOutcome::Abort(super::AbortReason::Interrupt),
                 _ => EventOutcome::Continue,
             },
             _ => EventOutcome::Continue,

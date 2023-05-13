@@ -144,7 +144,8 @@ impl<T> Prompt<T> for Selection<T> {
                         self.options.filtered_options()[self.current_selection];
                     let result = self.options.all_options_mut().remove(selected_option_index);
                     EventOutcome::Done(result)
-                }
+                },
+                KeyCode::Esc => EventOutcome::Abort(AbortReason::Interrupt),
                 _ => EventOutcome::Continue,
             },
             _ => EventOutcome::Continue,

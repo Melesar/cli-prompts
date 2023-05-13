@@ -6,7 +6,7 @@ use crossterm::{
     style::{Attribute, Color, Print, SetAttribute, SetForegroundColor},
 };
 
-use crate::prompts::{EventOutcome, Prompt};
+use crate::prompts::{EventOutcome, Prompt, AbortReason};
 
 use super::{multi_option_prompt::MultiOptionPrompt, Options};
 
@@ -203,7 +203,8 @@ impl<T> Prompt<Vec<T>> for Multiselect<T> {
                     }
 
                     EventOutcome::Done(result)
-                }
+                },
+                KeyCode::Esc => EventOutcome::Abort(AbortReason::Interrupt),
                 _ => EventOutcome::Continue,
             },
             _ => EventOutcome::Continue,
