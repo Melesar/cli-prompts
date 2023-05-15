@@ -2,6 +2,7 @@
 
 mod prompts;
 mod output;
+mod style;
 
 pub mod error;
 

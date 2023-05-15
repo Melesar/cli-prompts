@@ -2,13 +2,12 @@ use crossterm::{
     cursor::{position, MoveTo},
     event::{Event, KeyCode},
     queue,
-    style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
     terminal::{Clear, ClearType},
 };
 use std::io::Write;
 
 use super::{AbortReason, EventOutcome, Prompt};
-use crate::output::draw_prompt;
+use crate::style::{Color as Cc, Formatting, PromptStyle, StyledPrompt};
 
 pub struct Input<F> {
     label: String,
@@ -18,6 +17,16 @@ pub struct Input<F> {
     is_submitted: bool,
     error: Option<String>,
     validation: F,
+    style: InputStyle,
+}
+
+pub struct InputStyle {
+    pub label_style: PromptStyle,
+    pub default_value_formatting: Formatting,
+    pub error_formatting: Formatting,
+    pub input_formatting: Formatting,
+    pub submitted_formatting: Formatting,
+    pub help_message_formatting: Formatting,
 }
 
 impl<F, T> Input<F>
@@ -33,6 +42,7 @@ where
             is_submitted: false,
             error: None,
             validation,
+            style: InputStyle::default(),
         }
     }
 
@@ -58,43 +68,20 @@ where
             MoveTo(0, position()?.1)
         )?;
 
-        draw_prompt(buffer, &self.label)?;
+        self.style.label_style.print(buffer, &self.label)?;
 
-        if self.error.is_some() {
-            queue!(
-                buffer,
-                Print(" "),
-                SetForegroundColor(Color::Red),
-                Print(format!("[{}]", self.error.as_ref().unwrap())),
-                ResetColor
-            )?;
+        if let Some(error) = self.error.as_ref() {
+            self.style.error_formatting.print(buffer, format!("[{}]", error))?;
         } else if self.is_submitted {
-            queue!(
-                buffer,
-                SetForegroundColor(Color::Green),
-                Print(format!("{}\r\n", self.input)),
-                ResetColor,
-            )?;
+            self.style.submitted_formatting.print(buffer, format!("{}\r\n", self.input))?;
         } else if self.is_first_input && self.input.len() > 0 {
-            queue!(
-                buffer,
-                SetForegroundColor(Color::DarkGrey),
-                Print(format!("[{}]", self.input)),
-                ResetColor,
-            )?;
+            self.style.default_value_formatting.print(buffer, format!("[{}]", self.input))?;
         } else if !self.is_first_input {
-            queue!(buffer, Print(format!("{}", self.input)))?;
+            self.style.input_formatting.print(buffer, &self.input)?;
         }
 
         if let Some(help_message) = self.help_message.as_ref() {
-            queue!(
-                buffer,
-                SetForegroundColor(Color::DarkGreen),
-                Print(" ["),
-                Print(help_message),
-                Print("]"),
-                SetForegroundColor(Color::Reset)
-            )?;
+            self.style.help_message_formatting.print(buffer, format!("[{}]", help_message))?;
         }
 
         buffer.flush()?;
@@ -142,5 +129,26 @@ where
             }
             _ => EventOutcome::Continue,
         }
+    }
+}
+
+impl Default for InputStyle {
+    fn default() -> Self {
+        InputStyle {
+            label_style: PromptStyle::default(),
+            default_value_formatting: Formatting::default().foreground_color(Cc::Grey),
+            error_formatting: Formatting::default().foreground_color(Cc::Red),
+            input_formatting: Formatting::default(),
+            submitted_formatting: Formatting::default().foreground_color(Cc::Green),
+            help_message_formatting: Formatting::default().foreground_color(Cc::DarkGreen),
+        }
+    }
+}
+
+impl<T> StyledPrompt for Input<T> {
+    type S = InputStyle;
+
+    fn set_style(&mut self, style: Self::S) {
+        self.style = style;
     }
 }
