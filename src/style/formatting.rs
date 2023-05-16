@@ -28,6 +28,7 @@ impl From<FormattingOption> for crossterm::style::Attribute {
     }
 }
 
+#[derive(Clone)]
 pub struct Formatting {
     foreground_color: Option<Color>,
     background_color: Option<Color>,

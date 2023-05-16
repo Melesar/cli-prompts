@@ -1,17 +1,20 @@
 use super::{EventOutcome, Prompt};
-use crate::output::draw_prompt;
+use crate::style::ConfirmationStyle;
 
 use crossterm::{
+    cursor::{position, MoveTo},
+    event::{Event, KeyCode},
     queue,
-    event::{Event, KeyCode}, style::{SetForegroundColor, Color, ResetColor, Print}, terminal::{Clear, ClearType}, cursor::{MoveTo, position}
+    terminal::{Clear, ClearType},
 };
-use std::{io::Write, result};
+use std::io::Write;
 
 pub struct Confirmation {
     label: String,
     default_positive: bool,
     is_submitted: bool,
     selected_option: Option<bool>,
+    style: ConfirmationStyle,
 }
 
 impl Confirmation {
@@ -21,11 +24,17 @@ impl Confirmation {
             default_positive: true,
             is_submitted: false,
             selected_option: None,
+            style: ConfirmationStyle::default(),
         }
     }
 
     pub fn default_positive(mut self, default_positive: bool) -> Self {
         self.default_positive = default_positive;
+        self
+    }
+
+    pub fn style(mut self, s: ConfirmationStyle) -> Self {
+        self.style = s;
         self
     }
 }
@@ -37,8 +46,8 @@ impl Prompt<bool> for Confirmation {
             Clear(ClearType::CurrentLine),
             MoveTo(0, position()?.1)
         )?;
-        
-        draw_prompt(
+
+        self.style.label_style.print(
             buffer,
             format!(
                 "{} [{y}/{n}]",
@@ -48,21 +57,25 @@ impl Prompt<bool> for Confirmation {
             ),
         )?;
 
-        let result = if let Some(is_positive) = self.selected_option.as_ref() {
-            if *is_positive { "Yes" } else { "No" }
-        } else { 
-            ""
+        let mut result : String = if let Some(is_positive) = self.selected_option.as_ref() {
+            if *is_positive {
+                "Yes".into()
+            } else {
+                "No".into()
+            }
+        } else {
+            String::new()
         };
 
-        if self.is_submitted {
-            queue!(buffer, SetForegroundColor(Color::Green))?;
-        }
+        if self.is_submitted { result += "\r\n"; }
 
-        queue!(buffer, Print(result), ResetColor)?;
+        let formatting = if self.is_submitted {
+            &self.style.submitted_formatting
+        } else {
+            &self.style.input_formatting
+        };
 
-        if self.is_submitted {
-            queue!(buffer, Print("\r\n"))?;
-        }
+        formatting.print(buffer, result)?;
 
         buffer.flush()?;
         Ok(())
@@ -79,7 +92,7 @@ impl Prompt<bool> for Confirmation {
                         self.selected_option = Some(self.default_positive);
                         EventOutcome::Done(self.default_positive)
                     }
-                },
+                }
                 KeyCode::Char(c) if self.selected_option.is_none() => match c {
                     'y' | 'Y' => {
                         self.selected_option = Some(true);
@@ -88,13 +101,13 @@ impl Prompt<bool> for Confirmation {
                     'n' | 'N' => {
                         self.selected_option = Some(false);
                         EventOutcome::Continue
-                    },
-                    _ => EventOutcome::Continue
+                    }
+                    _ => EventOutcome::Continue,
                 },
                 KeyCode::Backspace => {
                     self.selected_option = None;
                     EventOutcome::Continue
-                },
+                }
                 KeyCode::Esc => EventOutcome::Abort(super::AbortReason::Interrupt),
                 _ => EventOutcome::Continue,
             },

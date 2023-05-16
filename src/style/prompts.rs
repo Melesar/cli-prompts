@@ -55,3 +55,40 @@ pub mod input {
         }
     }
 }
+
+pub mod confirmation {
+    use crate::style::{Color, Formatting, LabelStyle};
+
+    pub struct ConfirmationStyle {
+        pub label_style: LabelStyle,
+        pub input_formatting: Formatting,
+        pub submitted_formatting: Formatting,
+    }
+
+    impl Default for ConfirmationStyle {
+        fn default() -> Self {
+            ConfirmationStyle {
+                label_style: LabelStyle::default(),
+                input_formatting: Formatting::default(),
+                submitted_formatting: Formatting::default().foreground_color(Color::Green),
+            }
+        }
+    }
+
+    impl ConfirmationStyle {
+        pub fn label_style(mut self, l: LabelStyle) -> Self {
+            self.label_style = l;
+            self
+        }
+
+        pub fn input_formatting(mut self, f: Formatting) -> Self {
+            self.input_formatting = f;
+            self
+        }
+
+        pub fn submitted_formatting(mut self, f: Formatting) -> Self {
+            self.submitted_formatting = f;
+            self
+        }
+    }
+}

@@ -1,8 +1,9 @@
 use std::io::{Write, Result};
 
 use super::{Color, Formatting};
-use crossterm::{style::Print, Command, queue};
+use crossterm::{style::{Print, SetAttribute, Attribute}, Command, queue};
 
+#[derive(Clone)]
 pub struct LabelStyle {
     prefix: String,
     prefix_formatting: Formatting,
@@ -34,8 +35,9 @@ impl LabelStyle {
             buffer,
             self,
             Print(text.into()),
+            Print(":"),
+            Formatting::reset(),
             Print(" "),
-            Formatting::reset()
         )
     }
 }
