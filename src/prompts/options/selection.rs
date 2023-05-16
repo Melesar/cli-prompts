@@ -76,43 +76,50 @@ impl<T> MultiOptionPrompt<T> for Selection<T> {
         self.current_selection
     }
 
-    fn draw_option<W: Write>(&self, buffer: &mut W, _: usize, option_label: &str, is_selected: bool) -> Result<(), std::io::Error>{
-        let prefix = if is_selected { "> " } else { "  " };
-
+    fn draw_option<W: Write>(
+        &self,
+        buffer: &mut W,
+        _: usize,
+        option_label: &str,
+        is_selected: bool,
+    ) -> Result<(), std::io::Error> {
         queue!(buffer, Clear(ClearType::CurrentLine))?;
-        if is_selected {
-            queue!(buffer, SetAttribute(Attribute::Bold))?;
-        }
 
-        queue!(
-            buffer,
-            Print(prefix),
-            Print(option_label),
-            SetAttribute(Attribute::Reset),
-        )?;
-        Ok(())
+        let formatting = if is_selected {
+            queue!(buffer, &self.style.marker, Print(" "))?;
+            &self.style.selected_option_formatting
+        } else {
+            queue!(buffer, Print("  "))?;
+            &self.style.option_formatting
+        };
+
+
+        formatting.print(buffer, option_label)
     }
 
-    fn draw_header<W: Write>(&self, buffer: &mut W, is_submitted: bool) -> Result<(), std::io::Error>{
+    fn draw_header<W: Write>(
+        &self,
+        buffer: &mut W,
+        is_submitted: bool,
+    ) -> Result<(), std::io::Error> {
         if is_submitted {
-            queue!(buffer, SetForegroundColor(Color::Green))?;
             let selected_option_index = self.options.filtered_options()[self.current_selection];
-            queue!(
-                buffer,
-                Print(&self.options.transformed_options()[selected_option_index]),
-                SetForegroundColor(Color::Reset)
-            )?;
+            let selected_option = &self.options.transformed_options()[selected_option_index];
+            self.style.submitted_formatting.print(buffer, selected_option)
         } else {
-            queue!(buffer, Print(&self.current_filter))?;
+            self.style.filter_formatting.print(buffer, &self.current_filter)
         }
-
-        Ok(())
     }
 }
 
 impl<T> Prompt<T> for Selection<T> {
-    fn draw<W: Write>(&self, buffer: &mut W) -> Result<(), std::io::Error>{
-        self.draw_multioption(buffer, &self.label, self.is_submitted, &self.style.label_style)
+    fn draw<W: Write>(&self, buffer: &mut W) -> Result<(), std::io::Error> {
+        self.draw_multioption(
+            buffer,
+            &self.label,
+            self.is_submitted,
+            &self.style.label_style,
+        )
     }
 
     fn on_event(&mut self, evt: Event) -> EventOutcome<T> {
@@ -146,7 +153,7 @@ impl<T> Prompt<T> for Selection<T> {
                         self.options.filtered_options()[self.current_selection];
                     let result = self.options.all_options_mut().remove(selected_option_index);
                     EventOutcome::Done(result)
-                },
+                }
                 KeyCode::Esc => EventOutcome::Abort(AbortReason::Interrupt),
                 _ => EventOutcome::Continue,
             },
@@ -154,4 +161,3 @@ impl<T> Prompt<T> for Selection<T> {
         }
     }
 }
-

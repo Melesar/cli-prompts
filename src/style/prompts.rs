@@ -94,17 +94,49 @@ pub mod confirmation {
 }
 
 pub mod selection {
-    use crate::style::{Color, Formatting, LabelStyle};
+    use crate::style::{Color, Formatting, LabelStyle, OptionMarkerStyle};
 
     pub struct SelectionStyle {
         pub label_style: LabelStyle,
+        pub submitted_formatting: Formatting,
+        pub option_formatting: Formatting,
+        pub selected_option_formatting: Formatting,
+        pub filter_formatting: Formatting,
+        pub marker: OptionMarkerStyle,
     }
 
     impl Default for SelectionStyle {
         fn default() -> Self {
             SelectionStyle {
                 label_style: LabelStyle::default(),
+                submitted_formatting: Formatting::default().foreground_color(Color::Green),
+                option_formatting: Formatting::default(),
+                selected_option_formatting: Formatting::default().bold(),
+                filter_formatting: Formatting::default(),
+                marker: OptionMarkerStyle { marker: ">".into(), formatting: Formatting::default().bold() }
             }
+        }
+    }
+
+    impl SelectionStyle {
+        pub fn label_style(mut self, l: LabelStyle) -> Self {
+            self.label_style = l;
+            self
+        }
+
+        pub fn submitted_formatting(mut self, f: Formatting) -> Self {
+            self.submitted_formatting = f;
+            self
+        }
+
+        pub fn option_formatting(mut self, f: Formatting) -> Self {
+            self.option_formatting = f;
+            self
+        }
+
+        pub fn marker(mut self, m: OptionMarkerStyle) -> Self {
+            self.marker = m;
+            self
         }
     }
 }
