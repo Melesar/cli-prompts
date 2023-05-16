@@ -1,4 +1,4 @@
-use std::io::{stdout, Result};
+use std::io::Result;
 
 use cli_prompts::{
     prompts::{Confirmation, DisplayPrompt, Input},
@@ -26,7 +26,6 @@ fn main() -> Result<()> {
     let input_formatting = Formatting::default().foreground_color(Color::Cyan);
     let submitted_formatting = Formatting::default().foreground_color(Color::DarkCyan);
 
-    let mut stdout = stdout();
     let name = Input::new("Enter your name", name_validation)
         .style(
             InputStyle::default()
@@ -34,7 +33,7 @@ fn main() -> Result<()> {
                 .input_formatting(input_formatting.clone())
                 .submitted_formatting(submitted_formatting.clone()),
         )
-        .display(&mut stdout);
+        .display();
     let coffee = Confirmation::new("Do you want a cup of coffee")
         .style(
             ConfirmationStyle::default()
@@ -42,7 +41,7 @@ fn main() -> Result<()> {
                 .input_formatting(input_formatting.clone())
                 .submitted_formatting(submitted_formatting.clone()),
         )
-        .display(&mut stdout);
+        .display();
 
     println!("Name: {:?}", name);
     println!("Coffee: {:?}", coffee);

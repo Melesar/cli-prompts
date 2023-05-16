@@ -48,12 +48,11 @@ fn main() {
     let subjects_selection =
         Multiselect::new("What are your favourite subjects", subjects.into_iter());
 
-    let mut stdout = stdout();
-    let name = input_prompt.display(&mut stdout);
-    let is_coffee = confirmation.display(&mut stdout);
-    let dessert = dessert_selection.display(&mut stdout);
-    let car = car_selection.display(&mut stdout);
-    let subjects = subjects_selection.display(&mut stdout);
+    let name = input_prompt.display();
+    let is_coffee = confirmation.display();
+    let dessert = dessert_selection.display();
+    let car = car_selection.display();
+    let subjects = subjects_selection.display();
 
     println!("Name: {:?}", name);
     println!("Is coffee: {:?}", is_coffee);

@@ -7,7 +7,7 @@ pub use confirmation::Confirmation;
 pub use options::multiselect::Multiselect;
 pub use options::selection::Selection;
 
-use std::io::Write;
+use std::io::{Write, stdout};
 
 use crossterm::event::{read, Event};
 
@@ -32,21 +32,22 @@ pub trait Prompt<TOut> {
 }
 
 pub trait DisplayPrompt<T> {
-    fn display<W: Write>(self, buffer: &mut W) -> Result<T, AbortReason>;
+    fn display(self) -> Result<T, AbortReason>;
 }
 
 impl<T, P> DisplayPrompt<T> for P
 where
     P: Prompt<T> + Sized,
 {
-    fn display<W: Write>(mut self, buffer: &mut W) -> Result<T, AbortReason> {
+    fn display(mut self) -> Result<T, AbortReason> {
         let _raw = RawMode::ensure();
+        let mut buffer = stdout();
         loop {
-            self.draw(buffer)?;
+            self.draw(&mut buffer)?;
             match read() {
                 Ok(evt) => match self.on_event(evt) {
                     EventOutcome::Done(result) => {
-                        self.draw(buffer)?;
+                        self.draw(&mut buffer)?;
                         return Ok(result);
                     }
                     EventOutcome::Continue => continue,
