@@ -6,7 +6,7 @@ use crossterm::{
     style::{Attribute, Color, Print, SetAttribute, SetForegroundColor},
 };
 
-use crate::prompts::{EventOutcome, Prompt, AbortReason};
+use crate::{prompts::{EventOutcome, Prompt, AbortReason}, style::MultiselectionStyle};
 
 use super::{multi_option_prompt::MultiOptionPrompt, Options};
 
@@ -22,6 +22,7 @@ pub struct Multiselect<T> {
     currently_selected_index: usize,
     is_submitted: bool,
     filter: String,
+    style: MultiselectionStyle,
 }
 
 impl<T> Multiselect<T>
@@ -136,7 +137,7 @@ impl<T> MultiOptionPrompt<T> for Multiselect<T> {
 
 impl<T> Prompt<Vec<T>> for Multiselect<T> {
     fn draw<W: std::io::Write>(&self, buffer: &mut W) -> Result<(), std::io::Error>{
-        self.draw_multioption(buffer, &self.label, self.is_submitted)
+        self.draw_multioption(buffer, &self.label, self.is_submitted, &self.style.label_style)
     }
 
     fn on_event(&mut self, evt: Event) -> EventOutcome<Vec<T>> {
@@ -223,6 +224,7 @@ impl<T> Multiselect<T> {
             currently_selected_index: 0,
             is_submitted: false,
             filter: String::new(),
+            style: MultiselectionStyle::default(),
         }
     }
 }

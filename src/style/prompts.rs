@@ -92,3 +92,35 @@ pub mod confirmation {
         }
     }
 }
+
+pub mod selection {
+    use crate::style::{Color, Formatting, LabelStyle};
+
+    pub struct SelectionStyle {
+        pub label_style: LabelStyle,
+    }
+
+    impl Default for SelectionStyle {
+        fn default() -> Self {
+            SelectionStyle {
+                label_style: LabelStyle::default(),
+            }
+        }
+    }
+}
+
+pub mod multiselection {
+    use crate::style::{Color, Formatting, LabelStyle};
+
+    pub struct MultiselectionStyle {
+        pub label_style: LabelStyle,
+    }
+
+    impl Default for MultiselectionStyle {
+        fn default() -> Self {
+            MultiselectionStyle {
+                label_style: LabelStyle::default(),
+            }
+        }
+    }
+}

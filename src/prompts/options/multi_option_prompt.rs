@@ -7,7 +7,7 @@ use crossterm::{
     terminal::{Clear, ClearType},
 };
 
-use crate::output::draw_prompt;
+use crate::style::LabelStyle;
 
 use super::Options;
 
@@ -28,10 +28,10 @@ pub trait MultiOptionPrompt<T> {
 
     fn draw_header<W: Write>(&self, buffer: &mut W, is_submitted: bool) -> Result<(), std::io::Error>;
 
-    fn draw_multioption<W: Write>(&self, buffer: &mut W, label: &str, is_submitted: bool) -> Result<(), std::io::Error>{
+    fn draw_multioption<W: Write>(&self, buffer: &mut W, label: &str, is_submitted: bool, label_style: &LabelStyle) -> Result<(), std::io::Error>{
         queue!(buffer, Clear(ClearType::CurrentLine))?;
 
-        draw_prompt(buffer, label)?;
+        label_style.print(buffer, label)?;
         self.draw_header(buffer, is_submitted)?;
 
         queue!(buffer, Print("\r\n"))?;
@@ -74,7 +74,7 @@ pub trait MultiOptionPrompt<T> {
 
             queue!(buffer, MoveToPreviousLine(self.max_options_count() + 1))?;
         } else {
-            clear_options(buffer, self.max_options_count());
+            clear_options(buffer, self.max_options_count())?;
         }
 
         buffer.flush()?;

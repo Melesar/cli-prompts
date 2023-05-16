@@ -5,7 +5,7 @@ use crossterm::{
     terminal::{Clear, ClearType},
 };
 
-use crate::prompts::*;
+use crate::{prompts::*, style::SelectionStyle};
 
 use super::multi_option_prompt::MultiOptionPrompt;
 use super::Options;
@@ -19,6 +19,7 @@ pub struct Selection<T> {
     max_options: u16,
     current_filter: String,
     is_submitted: bool,
+    style: SelectionStyle,
 }
 
 impl<T> Selection<T> {
@@ -57,6 +58,7 @@ impl<T> Selection<T> {
             max_options: DEFAULT_OPTIONS_COUNT,
             current_filter: String::new(),
             is_submitted: false,
+            style: SelectionStyle::default(),
         }
     }
 }
@@ -110,7 +112,7 @@ impl<T> MultiOptionPrompt<T> for Selection<T> {
 
 impl<T> Prompt<T> for Selection<T> {
     fn draw<W: Write>(&self, buffer: &mut W) -> Result<(), std::io::Error>{
-        self.draw_multioption(buffer, &self.label, self.is_submitted)
+        self.draw_multioption(buffer, &self.label, self.is_submitted, &self.style.label_style)
     }
 
     fn on_event(&mut self, evt: Event) -> EventOutcome<T> {
