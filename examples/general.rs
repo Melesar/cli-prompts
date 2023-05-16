@@ -1,6 +1,6 @@
 use std::io::stdout;
 
-use cli_prompts::{display_prompt, Input};
+use cli_prompts::prompts::{Confirmation, DisplayPrompt, Input, Multiselect, Selection};
 
 #[derive(Debug)]
 enum CarModel {
@@ -34,30 +34,26 @@ fn main() {
         "English",
         "Sport",
         "Geography",
-        "History"
+        "History",
     ];
     let cars = [CarModel::Audi, CarModel::BMW, CarModel::Chevrolet];
 
-    let input_prompt = cli_prompts::Input::new("Enter your name", |s| Ok(s.to_string()))
+    let input_prompt = Input::new("Enter your name", |s| Ok(s.to_string()))
         .default_value("John")
         .help_message("Please provide your real name");
-    let confirmation =
-        cli_prompts::Confirmation::new("Do you want a cup of coffee?").default_positive(true);
-    let dessert_selection =
-        cli_prompts::Selection::new("Your favoite dessert", desserts.into_iter());
-    let car_selection = cli_prompts::Selection::new_with_transformation(
-        "Your car model",
-        cars.into_iter(),
-        car_to_string,
-    );
-    let subjects_selection = cli_prompts::Multiselect::new("What are your favourite subjects", subjects.into_iter());
+    let confirmation = Confirmation::new("Do you want a cup of coffee?").default_positive(true);
+    let dessert_selection = Selection::new("Your favoite dessert", desserts.into_iter());
+    let car_selection =
+        Selection::new_with_transformation("Your car model", cars.into_iter(), car_to_string);
+    let subjects_selection =
+        Multiselect::new("What are your favourite subjects", subjects.into_iter());
 
     let mut stdout = stdout();
-    let name = display_prompt(input_prompt, &mut stdout);
-    let is_coffee = display_prompt(confirmation, &mut stdout);
-    let dessert = display_prompt(dessert_selection, &mut stdout);
-    let car = display_prompt(car_selection, &mut stdout);
-    let subjects = display_prompt(subjects_selection, &mut stdout);
+    let name = input_prompt.display(&mut stdout);
+    let is_coffee = confirmation.display(&mut stdout);
+    let dessert = dessert_selection.display(&mut stdout);
+    let car = car_selection.display(&mut stdout);
+    let subjects = subjects_selection.display(&mut stdout);
 
     println!("Name: {:?}", name);
     println!("Is coffee: {:?}", is_coffee);

@@ -3,13 +3,13 @@ use std::io::{Write, Result};
 use super::{Color, Formatting};
 use crossterm::{style::Print, Command, queue};
 
-pub struct PromptStyle {
+pub struct LabelStyle {
     prefix: String,
     prefix_formatting: Formatting,
     prompt_formatting: Formatting,
 }
 
-impl PromptStyle {
+impl LabelStyle {
     pub fn prefix<S: Into<String>>(mut self, p: S) -> Self {
         self.prefix = p.into();
         self
@@ -40,9 +40,9 @@ impl PromptStyle {
     }
 }
 
-impl Default for PromptStyle {
+impl Default for LabelStyle {
     fn default() -> Self {
-        PromptStyle {
+        LabelStyle {
             prefix: "?".into(),
             prefix_formatting: Formatting::default().bold().foreground_color(Color::Green),
             prompt_formatting: Formatting::default().bold(),
@@ -50,7 +50,7 @@ impl Default for PromptStyle {
     }
 }
 
-impl Command for PromptStyle {
+impl Command for LabelStyle {
     fn write_ansi(&self, f: &mut impl std::fmt::Write) -> std::fmt::Result {
         self.prefix_formatting.write_ansi(f)?;
         Print(&self.prefix).write_ansi(f)?;

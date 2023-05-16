@@ -1,16 +1,17 @@
-pub mod input;
-pub mod confirmation;
-
+mod confirmation;
+mod input;
 mod options;
 
-pub use options::selection;
-pub use options::multiselect;
+pub use input::Input;
+pub use confirmation::Confirmation;
+pub use options::multiselect::Multiselect;
+pub use options::selection::Selection;
 
 use std::io::Write;
 
-use crossterm::event::{Event, read};
+use crossterm::event::{read, Event};
 
-use crate::RawMode;
+use crate::raw_mode::RawMode;
 
 #[derive(Debug)]
 pub enum AbortReason {
@@ -30,24 +31,29 @@ pub trait Prompt<TOut> {
     fn on_event(&mut self, evt: Event) -> EventOutcome<TOut>;
 }
 
-pub fn display_prompt<P, W, T>(mut prompt: P, buffer: &mut W) -> Result<T, AbortReason>
+pub trait DisplayPrompt<T> {
+    fn display<W: Write>(self, buffer: &mut W) -> Result<T, AbortReason>;
+}
+
+impl<T, P> DisplayPrompt<T> for P
 where
-    P: Prompt<T>,
-    W: Write 
+    P: Prompt<T> + Sized,
 {
-    let _raw = RawMode::ensure();
-    loop {
-        prompt.draw(buffer)?;
-        match read() {
-            Ok(evt) => match prompt.on_event(evt) {
-                EventOutcome::Done(result) => {
-                    prompt.draw(buffer)?;
-                    return Ok(result);
+    fn display<W: Write>(mut self, buffer: &mut W) -> Result<T, AbortReason> {
+        let _raw = RawMode::ensure();
+        loop {
+            self.draw(buffer)?;
+            match read() {
+                Ok(evt) => match self.on_event(evt) {
+                    EventOutcome::Done(result) => {
+                        self.draw(buffer)?;
+                        return Ok(result);
+                    }
+                    EventOutcome::Continue => continue,
+                    EventOutcome::Abort(reason) => return Err(reason),
                 },
-                EventOutcome::Continue => continue,
-                EventOutcome::Abort(reason) => return Err(reason),
-            },
-            Err(error) => return Err(error.into())
+                Err(error) => return Err(error.into()),
+            }
         }
     }
 }

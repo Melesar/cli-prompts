@@ -1,15 +1,14 @@
 use std::io::{stdout, Result};
 
 use cli_prompts::{
-    display_prompt,
-    style::{Color, Formatting, PromptStyle},
-    Input, InputStyle,
+    prompts::{DisplayPrompt, Input, InputStyle},
+    style::{Color, Formatting, LabelStyle},
 };
 
 fn main() -> Result<()> {
     let style = InputStyle::default()
         .label_style(
-            PromptStyle::default()
+            LabelStyle::default()
                 .prefix("*")
                 .prefix_formatting(Formatting::default().foreground_color(Color::Yellow))
                 .prompt_formatting(Formatting::default().italic().underline()),
@@ -20,7 +19,7 @@ fn main() -> Result<()> {
     let mut stdout = stdout();
     let prompt = Input::new("Enter your name", |s| Ok(s.to_string())).style(style);
 
-    let result = display_prompt(prompt, &mut stdout);
+    let result = prompt.display(&mut stdout);
     println!("Name: {:?}", result);
 
     Ok(())

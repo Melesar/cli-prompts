@@ -7,7 +7,7 @@ use crossterm::{
 use std::io::Write;
 
 use super::{AbortReason, EventOutcome, Prompt};
-use crate::style::{Color as Cc, Formatting, PromptStyle, StyledPrompt};
+use crate::style::InputStyle;
 
 pub struct Input<F> {
     label: String,
@@ -20,14 +20,6 @@ pub struct Input<F> {
     style: InputStyle,
 }
 
-pub struct InputStyle {
-    label_style: PromptStyle,
-    default_value_formatting: Formatting,
-    error_formatting: Formatting,
-    input_formatting: Formatting,
-    submitted_formatting: Formatting,
-    help_message_formatting: Formatting,
-}
 
 impl<F, T> Input<F>
 where
@@ -137,47 +129,3 @@ where
     }
 }
 
-impl Default for InputStyle {
-    fn default() -> Self {
-        InputStyle {
-            label_style: PromptStyle::default(),
-            default_value_formatting: Formatting::default().foreground_color(Cc::Grey),
-            error_formatting: Formatting::default().foreground_color(Cc::Red),
-            input_formatting: Formatting::default(),
-            submitted_formatting: Formatting::default().foreground_color(Cc::Green),
-            help_message_formatting: Formatting::default().foreground_color(Cc::DarkGreen),
-        }
-    }
-}
-
-impl InputStyle {
-    pub fn label_style(mut self, l: PromptStyle) -> Self {
-        self.label_style = l;
-        self
-    }
-
-    pub fn default_value_formatting(mut self, f: Formatting) -> Self {
-        self.default_value_formatting = f;
-        self
-    }
-
-    pub fn error_formatting(mut self, f: Formatting) -> Self {
-        self.error_formatting = f;
-        self
-    }
-
-    pub fn input_formatting(mut self, f: Formatting) -> Self {
-        self.input_formatting = f;
-        self
-    }
-
-    pub fn submitted_formatting(mut self, f: Formatting) -> Self {
-        self.submitted_formatting = f;
-        self
-    }
-
-    pub fn help_message_formatting(mut self, f: Formatting) -> Self {
-        self.help_message_formatting = f;
-        self
-    }
-}
