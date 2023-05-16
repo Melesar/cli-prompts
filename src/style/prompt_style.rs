@@ -10,6 +10,21 @@ pub struct PromptStyle {
 }
 
 impl PromptStyle {
+    pub fn prefix<S: Into<String>>(mut self, p: S) -> Self {
+        self.prefix = p.into();
+        self
+    }
+
+    pub fn prefix_formatting(mut self, f: Formatting) -> Self {
+        self.prefix_formatting = f;
+        self
+    }
+
+    pub fn prompt_formatting(mut self, f: Formatting) -> Self {
+        self.prompt_formatting = f;
+        self
+    }
+
     pub fn print<W, S>(&self, buffer: &mut W, text: S) -> Result<()>
     where
         W: Write,

@@ -21,12 +21,12 @@ pub struct Input<F> {
 }
 
 pub struct InputStyle {
-    pub label_style: PromptStyle,
-    pub default_value_formatting: Formatting,
-    pub error_formatting: Formatting,
-    pub input_formatting: Formatting,
-    pub submitted_formatting: Formatting,
-    pub help_message_formatting: Formatting,
+    label_style: PromptStyle,
+    default_value_formatting: Formatting,
+    error_formatting: Formatting,
+    input_formatting: Formatting,
+    submitted_formatting: Formatting,
+    help_message_formatting: Formatting,
 }
 
 impl<F, T> Input<F>
@@ -53,6 +53,11 @@ where
 
     pub fn default_value<S: Into<String>>(mut self, val: S) -> Self {
         self.input = val.into();
+        self
+    }
+
+    pub fn style(mut self, style: InputStyle) -> Self {
+        self.style = style;
         self
     }
 }
@@ -145,10 +150,34 @@ impl Default for InputStyle {
     }
 }
 
-impl<T> StyledPrompt for Input<T> {
-    type S = InputStyle;
+impl InputStyle {
+    pub fn label_style(mut self, l: PromptStyle) -> Self {
+        self.label_style = l;
+        self
+    }
 
-    fn set_style(&mut self, style: Self::S) {
-        self.style = style;
+    pub fn default_value_formatting(mut self, f: Formatting) -> Self {
+        self.default_value_formatting = f;
+        self
+    }
+
+    pub fn error_formatting(mut self, f: Formatting) -> Self {
+        self.error_formatting = f;
+        self
+    }
+
+    pub fn input_formatting(mut self, f: Formatting) -> Self {
+        self.input_formatting = f;
+        self
+    }
+
+    pub fn submitted_formatting(mut self, f: Formatting) -> Self {
+        self.submitted_formatting = f;
+        self
+    }
+
+    pub fn help_message_formatting(mut self, f: Formatting) -> Self {
+        self.help_message_formatting = f;
+        self
     }
 }

@@ -2,11 +2,11 @@
 
 mod prompts;
 mod output;
-mod style;
 
+pub mod style;
 pub mod error;
 
-pub use prompts::input::Input;
+pub use prompts::input::{Input, InputStyle};
 pub use prompts::confirmation::Confirmation;
 pub use prompts::selection::Selection;
 pub use prompts::multiselect::Multiselect;
