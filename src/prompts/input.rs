@@ -82,6 +82,7 @@ where
 
     fn on_key_pressed(&mut self, key: Key) -> EventOutcome<T> {
         let is_first_input = self.is_first_input;
+        self.is_first_input = false;
         match key {
             Key::Char(c) => {
                 if is_first_input {

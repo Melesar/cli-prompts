@@ -2,8 +2,8 @@ mod crossterm;
 
 pub use self::crossterm::CrosstermEngine;
 
+use crate::{input::Key, style::Formatting};
 use std::io::Result;
-use crate::{style::Formatting, input::Key};
 
 pub trait Engine {
     type Buffer: CommandBuffer + Clear;
