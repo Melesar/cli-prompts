@@ -3,11 +3,6 @@ use std::io::{Result, Write};
 use crate::engine::CommandBuffer;
 
 use super::color::Color;
-use crossterm::{
-    queue,
-    style::{Attribute, Attributes, Colors, Print, SetAttributes, SetColors},
-    Command,
-};
 
 #[derive(Clone, Copy)]
 pub enum FormattingOption {
@@ -71,52 +66,9 @@ impl Formatting {
         f.text_formatting.push(FormattingOption::Reset);
         f
     }
-
-    pub fn print<W, S>(&self, buffer: &mut W, text: S) -> Result<()>
-    where
-        W: Write,
-        S: Into<String>,
-    {
-        queue!(buffer, self, Print(text.into()), Self::reset())
-    }
-
-   pub fn print_cmd(&self, text: impl Into<String>, cmd_buffer: &mut impl CommandBuffer) {
+    pub fn print(&self, text: impl Into<String>, cmd_buffer: &mut impl CommandBuffer) {
         cmd_buffer.set_formatting(self);
         cmd_buffer.print(&text.into());
         cmd_buffer.reset_formatting();
-   }
-}
-
-impl Command for Formatting {
-    fn write_ansi(&self, f: &mut impl std::fmt::Write) -> std::fmt::Result {
-        self.get_colors().write_ansi(f)?;
-        self.get_attributes().write_ansi(f)?;
-
-        Ok(())
-    }
-
-    #[cfg(windows)]
-    fn execute_winapi(&self) -> Result<()> {
-        self.get_colors().execute_winapi()?;
-        self.get_attributes().execute_winapi()?;
-
-        Ok(())
-    }
-}
-
-impl Formatting {
-    fn get_colors(&self) -> SetColors {
-        SetColors(Colors {
-            foreground: self.foreground_color.map(|c| c.into()),
-            background: self.background_color.map(|c| c.into()),
-        })
-    }
-
-    fn get_attributes(&self) -> SetAttributes {
-        let attributes_vec: Vec<Attribute> =
-            self.text_formatting.iter().map(|&f| f.into()).collect();
-        let attributes_ref: &[Attribute] = &attributes_vec;
-        let attributes: Attributes = attributes_ref.into();
-        SetAttributes(attributes)
     }
 }

@@ -1,18 +1,27 @@
-use std::io::{Write, Result};
+use std::io::{Result, Write};
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode, is_raw_mode_enabled};
+
 
 use crossterm::{
     cursor::{position, MoveTo, MoveToPreviousLine},
-    queue,
-    terminal::{Clear, ClearType}, style::{Print, SetColors, Colors, Attribute, Attributes, SetAttributes}, execute,
+    event::{read, Event},
+    execute, queue,
+    style::{Attribute, Attributes, Colors, Print, SetAttributes, SetColors, Color as Cc},
+    terminal::{Clear, ClearType},
 };
 
-
-use crate::style::{Formatting, FormattingOption};
+use crate::{
+    input::Key,
+    style::{Formatting, FormattingOption, Color},
+};
 
 use super::{CommandBuffer, Engine};
 
+struct RawMode(bool);
+
 pub struct CrosstermEngine<W: Write> {
     buffer: W,
+    raw_mode: RawMode,
     previous_line_count: u16,
 }
 
@@ -25,6 +34,7 @@ impl<W: Write> CrosstermEngine<W> {
     pub fn new(buffer: W) -> Self {
         CrosstermEngine {
             buffer,
+            raw_mode: RawMode::ensure(),
             previous_line_count: 1,
         }
     }
@@ -57,6 +67,21 @@ impl<W: Write> Engine for CrosstermEngine<W> {
 
     fn finish_rendering(&mut self) -> Result<()> {
         execute!(self.buffer, Print("\r\n"))
+    }
+
+    fn read_key(&self) -> Result<Key> {
+        loop {
+            match read() {
+                Ok(evt) => {
+                    if let Event::Key(key) = evt {
+                        return Ok(key.code.into());
+                    } else {
+                        continue;
+                    }
+                }
+                Err(error) => return Err(error),
+            }
+        }
     }
 }
 
@@ -94,6 +119,25 @@ impl<W: Write> super::Clear for CrosstermCommandBuffer<W> {
     fn clear(&mut self) {
         self.commands.clear();
         self.lines_count = 1;
+    }
+}
+
+impl RawMode {
+    pub fn ensure() -> Self {
+        let is_raw = is_raw_mode_enabled().unwrap_or(false);
+        if !is_raw {
+            enable_raw_mode().unwrap_or_default();
+        }
+
+        Self(is_raw)
+    }
+}
+
+impl Drop for RawMode {
+    fn drop(&mut self) {
+        if !self.0 {
+            disable_raw_mode().unwrap_or_default();
+        }
     }
 }
 
@@ -141,6 +185,57 @@ impl From<FormattingOption> for crossterm::style::Attribute {
             FormattingOption::Italic => Attribute::Italic,
             FormattingOption::Underline => Attribute::Underlined,
             FormattingOption::CrossedOut => Attribute::CrossedOut,
+        }
+    }
+}
+
+impl From<crossterm::event::KeyCode> for Key {
+    fn from(key_code: crossterm::event::KeyCode) -> Self {
+        match key_code {
+            crossterm::event::KeyCode::Backspace => Key::Backspace,
+            crossterm::event::KeyCode::Enter => Key::Enter,
+            crossterm::event::KeyCode::Left => Key::Left,
+            crossterm::event::KeyCode::Right => Key::Right,
+            crossterm::event::KeyCode::Up => Key::Up,
+            crossterm::event::KeyCode::Down => Key::Down,
+            crossterm::event::KeyCode::Home => Key::Home,
+            crossterm::event::KeyCode::End => Key::End,
+            crossterm::event::KeyCode::PageUp => Key::PageUp,
+            crossterm::event::KeyCode::PageDown => Key::PageDown,
+            crossterm::event::KeyCode::Tab => Key::Tab,
+            crossterm::event::KeyCode::BackTab => Key::BackTab,
+            crossterm::event::KeyCode::Delete => Key::Delete,
+            crossterm::event::KeyCode::Insert => Key::Insert,
+            crossterm::event::KeyCode::F(func) => Key::F(func),
+            crossterm::event::KeyCode::Char(c) => Key::Char(c),
+            crossterm::event::KeyCode::Null => Key::Esc,
+            crossterm::event::KeyCode::Esc => Key::Esc,
+        }
+    }
+}
+
+impl From<Color> for Cc {
+    fn from(value: Color) -> Self {
+        match value {
+            Color::Reset => Cc::Reset,
+            Color::Black => Cc::Black,
+            Color::DarkGrey => Cc::DarkGrey,
+            Color::Red => Cc::Red,
+            Color::DarkRed => Cc::DarkRed,
+            Color::Green => Cc::Green,
+            Color::DarkGreen => Cc::DarkGreen,
+            Color::Yellow => Cc::Yellow,
+            Color::DarkYellow => Cc::DarkYellow,
+            Color::Blue => Cc::Blue,
+            Color::DarkBlue => Cc::DarkBlue,
+            Color::Magenta => Cc::Magenta,
+            Color::DarkMagenta => Cc::DarkMagenta,
+            Color::Cyan => Cc::Cyan,
+            Color::DarkCyan => Cc::DarkCyan,
+            Color::White => Cc::White,
+            Color::Grey => Cc::Grey,
+            Color::Rgb { r, g, b } => Cc::Rgb { r, g, b },
+            Color::AnsiValue(c) => Cc::AnsiValue(c),
         }
     }
 }

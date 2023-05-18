@@ -24,7 +24,7 @@ pub trait MultiOptionPrompt<T> {
         label_style: &LabelStyle,
         cmd_buffer: &mut impl CommandBuffer,
     ) {
-        label_style.print_cmd(label, cmd_buffer);
+        label_style.print(label, cmd_buffer);
         self.draw_header(cmd_buffer, is_submitted);
 
         if !is_submitted {

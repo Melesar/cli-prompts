@@ -94,10 +94,6 @@ pub mod confirmation {
 }
 
 pub mod selection {
-    use std::io::{Result, Write};
-
-    use crossterm::{queue, style::Print};
-
     use crate::{
         engine::CommandBuffer,
         style::{Color, Formatting, LabelStyle},
@@ -166,13 +162,7 @@ pub mod selection {
     }
 
     impl Marker {
-        pub fn print<W: Write>(&self, buffer: &mut W) -> Result<()> {
-            queue!(buffer, &self.formatting)?;
-            queue!(buffer, Print(&self.marker))?;
-            queue!(buffer, Formatting::reset())
-        }
-
-        pub fn print_cmd(&self, cmd_buffer: &mut impl CommandBuffer) {
+        pub fn print(&self, cmd_buffer: &mut impl CommandBuffer) {
             cmd_buffer.set_formatting(&self.formatting);
             cmd_buffer.print(&self.marker);
             cmd_buffer.reset_formatting();
@@ -181,8 +171,6 @@ pub mod selection {
 }
 
 pub mod multiselection {
-    use crossterm::queue;
-
     use crate::{
         engine::CommandBuffer,
         style::{Color, Formatting, LabelStyle},

@@ -1,7 +1,6 @@
-use crossterm::event::{Event, KeyCode};
-
 use crate::{
     engine::CommandBuffer,
+    input::Key,
     prompts::{options::Options, AbortReason, EventOutcome, Prompt},
     style::MultiselectionStyle,
 };
@@ -125,74 +124,70 @@ impl<T> Prompt<Vec<T>> for Multiselect<T> {
         );
     }
 
-    fn on_event(&mut self, evt: Event) -> EventOutcome<Vec<T>> {
-        match evt {
-            Event::Key(key) => match key.code {
-                KeyCode::Up if self.currently_selected_index > 0 => {
-                    self.currently_selected_index -= 1;
-                    EventOutcome::Continue
-                }
-                KeyCode::Down
-                    if self.currently_selected_index
-                        < self.options.filtered_options().len() - 1 =>
-                {
-                    self.currently_selected_index += 1;
-                    EventOutcome::Continue
-                }
-                KeyCode::Char(c) => {
-                    if c == ' ' {
-                        let selected_option_index =
-                            self.options.filtered_options()[self.currently_selected_index];
-                        let existing_value_index = self
-                            .selected_options
-                            .iter()
-                            .enumerate()
-                            .find(|&x| *x.1 == selected_option_index)
-                            .map(|x| x.0);
+    fn on_key_pressed(&mut self, key: Key) -> EventOutcome<Vec<T>> {
+        match key {
+            Key::Up if self.currently_selected_index > 0 => {
+                self.currently_selected_index -= 1;
+                EventOutcome::Continue
+            }
+            Key::Down
+                if self.currently_selected_index < self.options.filtered_options().len() - 1 =>
+            {
+                self.currently_selected_index += 1;
+                EventOutcome::Continue
+            }
+            Key::Char(c) => {
+                if c == ' ' {
+                    let selected_option_index =
+                        self.options.filtered_options()[self.currently_selected_index];
+                    let existing_value_index = self
+                        .selected_options
+                        .iter()
+                        .enumerate()
+                        .find(|&x| *x.1 == selected_option_index)
+                        .map(|x| x.0);
 
-                        if let Some(i) = existing_value_index {
-                            self.selected_options.remove(i);
-                        } else {
-                            self.selected_options.push(selected_option_index);
-                        }
-
-                        if self.filter.len() > 0 {
-                            self.filter.clear();
-                            self.options.filter(&self.filter);
-                            self.currently_selected_index = 0;
-                        }
-                        EventOutcome::Continue
+                    if let Some(i) = existing_value_index {
+                        self.selected_options.remove(i);
                     } else {
-                        self.filter.push(c);
+                        self.selected_options.push(selected_option_index);
+                    }
+
+                    if self.filter.len() > 0 {
+                        self.filter.clear();
                         self.options.filter(&self.filter);
                         self.currently_selected_index = 0;
-                        EventOutcome::Continue
                     }
-                }
-                KeyCode::Backspace if self.filter.len() > 0 => {
-                    self.filter.pop();
+                    EventOutcome::Continue
+                } else {
+                    self.filter.push(c);
                     self.options.filter(&self.filter);
                     self.currently_selected_index = 0;
                     EventOutcome::Continue
                 }
-                KeyCode::Enter if self.selected_options.len() > 0 => {
-                    self.is_submitted = true;
-                    self.selected_options.sort();
+            }
+            Key::Backspace if self.filter.len() > 0 => {
+                self.filter.pop();
+                self.options.filter(&self.filter);
+                self.currently_selected_index = 0;
+                EventOutcome::Continue
+            }
+            Key::Enter if self.selected_options.len() > 0 => {
+                self.is_submitted = true;
+                self.selected_options.sort();
 
-                    let mut result = vec![];
-                    for selected_option_index in self.selected_options.iter().rev() {
-                        let selected_option = self
-                            .options
-                            .all_options_mut()
-                            .remove(*selected_option_index);
-                        result.push(selected_option);
-                    }
-
-                    EventOutcome::Done(result)
+                let mut result = vec![];
+                for selected_option_index in self.selected_options.iter().rev() {
+                    let selected_option = self
+                        .options
+                        .all_options_mut()
+                        .remove(*selected_option_index);
+                    result.push(selected_option);
                 }
-                KeyCode::Esc => EventOutcome::Abort(AbortReason::Interrupt),
-                _ => EventOutcome::Continue,
-            },
+
+                EventOutcome::Done(result)
+            }
+            Key::Esc => EventOutcome::Abort(AbortReason::Interrupt),
             _ => EventOutcome::Continue,
         }
     }

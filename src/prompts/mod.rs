@@ -1,19 +1,17 @@
-mod input;
 mod confirmation;
+mod input;
 mod options;
 
-pub use input::Input;
 pub use confirmation::Confirmation;
-pub use options::selection::Selection;
+pub use input::Input;
 pub use options::multiselect::Multiselect;
+pub use options::selection::Selection;
 
 use std::io::stdout;
 
-use crossterm::event::{read, Event};
-
 use crate::{
     engine::{Clear, CommandBuffer, CrosstermEngine, Engine},
-    raw_mode::RawMode,
+    input::Key,
 };
 
 #[derive(Debug)]
@@ -31,7 +29,7 @@ pub enum EventOutcome<T> {
 
 pub trait Prompt<TOut> {
     fn draw(&self, commands: &mut impl CommandBuffer);
-    fn on_event(&mut self, evt: Event) -> EventOutcome<TOut>;
+    fn on_key_pressed(&mut self, key: Key) -> EventOutcome<TOut>;
 }
 
 pub trait DisplayPrompt<T> {
@@ -43,7 +41,6 @@ where
     P: Prompt<T> + Sized,
 {
     fn display(mut self) -> Result<T, AbortReason> {
-        let _raw = RawMode::ensure();
         let buffer = stdout();
         let mut engine = CrosstermEngine::new(buffer);
         let mut commands = engine.get_command_buffer();
@@ -52,23 +49,21 @@ where
             self.draw(&mut commands);
             engine.render(&commands)?;
 
-            match read() {
-                Ok(evt) => match self.on_event(evt) {
-                    EventOutcome::Done(result) => {
-                        commands.clear();
-                        self.draw(&mut commands);
-                        engine.render(&commands)?;
-                        engine.finish_rendering()?;
+            let key_pressed = engine.read_key()?;
+            match self.on_key_pressed(key_pressed) {
+                EventOutcome::Done(result) => {
+                    commands.clear();
+                    self.draw(&mut commands);
+                    engine.render(&commands)?;
+                    engine.finish_rendering()?;
 
-                        return Ok(result);
-                    }
-                    EventOutcome::Continue => {
-                        commands.clear();
-                        continue;
-                    },
-                    EventOutcome::Abort(reason) => return Err(reason),
-                },
-                Err(error) => return Err(error.into()),
+                    return Ok(result);
+                }
+                EventOutcome::Continue => {
+                    commands.clear();
+                    continue;
+                }
+                EventOutcome::Abort(reason) => return Err(reason),
             }
         }
     }

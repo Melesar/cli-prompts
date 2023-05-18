@@ -1,6 +1,4 @@
-use crossterm::event::{KeyCode, Event};
-
-use crate::{style::ConfirmationStyle, prompts::EventOutcome, engine::CommandBuffer};
+use crate::{engine::CommandBuffer, input::Key, prompts::EventOutcome, style::ConfirmationStyle};
 
 use super::Prompt;
 
@@ -36,17 +34,17 @@ impl Confirmation {
 
 impl Prompt<bool> for Confirmation {
     fn draw(&self, commands: &mut impl CommandBuffer) {
-        self.style.label_style.print_cmd(
+        self.style.label_style.print(
             format!(
                 "{} [{y}/{n}]",
                 self.label,
                 y = if self.default_positive { 'Y' } else { 'y' },
                 n = if !self.default_positive { 'N' } else { 'n' },
             ),
-            commands
+            commands,
         );
 
-        let result : String = if let Some(is_positive) = self.selected_option.as_ref() {
+        let result: String = if let Some(is_positive) = self.selected_option.as_ref() {
             if *is_positive {
                 "Yes".into()
             } else {
@@ -62,39 +60,36 @@ impl Prompt<bool> for Confirmation {
             &self.style.input_formatting
         };
 
-        formatting.print_cmd(result, commands);
+        formatting.print(result, commands);
     }
 
-    fn on_event(&mut self, evt: Event) -> EventOutcome<bool> {
-        match evt {
-            Event::Key(key) => match key.code {
-                KeyCode::Enter => {
-                    self.is_submitted = true;
-                    if let Some(is_positive) = self.selected_option.as_ref() {
-                        EventOutcome::Done(*is_positive)
-                    } else {
-                        self.selected_option = Some(self.default_positive);
-                        EventOutcome::Done(self.default_positive)
-                    }
+    fn on_key_pressed(&mut self, key: Key) -> EventOutcome<bool> {
+        match key {
+            Key::Enter => {
+                self.is_submitted = true;
+                if let Some(is_positive) = self.selected_option.as_ref() {
+                    EventOutcome::Done(*is_positive)
+                } else {
+                    self.selected_option = Some(self.default_positive);
+                    EventOutcome::Done(self.default_positive)
                 }
-                KeyCode::Char(c) if self.selected_option.is_none() => match c {
-                    'y' | 'Y' => {
-                        self.selected_option = Some(true);
-                        EventOutcome::Continue
-                    }
-                    'n' | 'N' => {
-                        self.selected_option = Some(false);
-                        EventOutcome::Continue
-                    }
-                    _ => EventOutcome::Continue,
-                },
-                KeyCode::Backspace => {
-                    self.selected_option = None;
+            }
+            Key::Char(c) if self.selected_option.is_none() => match c {
+                'y' | 'Y' => {
+                    self.selected_option = Some(true);
                     EventOutcome::Continue
                 }
-                KeyCode::Esc => EventOutcome::Abort(super::AbortReason::Interrupt),
+                'n' | 'N' => {
+                    self.selected_option = Some(false);
+                    EventOutcome::Continue
+                }
                 _ => EventOutcome::Continue,
             },
+            Key::Backspace => {
+                self.selected_option = None;
+                EventOutcome::Continue
+            }
+            Key::Esc => EventOutcome::Abort(super::AbortReason::Interrupt),
             _ => EventOutcome::Continue,
         }
     }

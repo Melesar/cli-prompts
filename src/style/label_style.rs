@@ -1,9 +1,6 @@
-use std::io::{Write, Result};
-
 use crate::engine::CommandBuffer;
 
 use super::{Color, Formatting};
-use crossterm::{style::{Print, SetAttribute, Attribute}, Command, queue};
 
 #[derive(Clone)]
 pub struct LabelStyle {
@@ -28,22 +25,7 @@ impl LabelStyle {
         self
     }
 
-    pub fn print<W, S>(&self, buffer: &mut W, text: S) -> Result<()>
-    where
-        W: Write,
-        S: Into<String>,
-    {
-        queue!(
-            buffer,
-            self,
-            Print(text.into()),
-            Print(":"),
-            Formatting::reset(),
-            Print(" "),
-        )
-    }
-
-    pub fn print_cmd(&self, text: impl Into<String>, cmd_buffer: &mut impl CommandBuffer) {
+    pub fn print(&self, text: impl Into<String>, cmd_buffer: &mut impl CommandBuffer) {
         cmd_buffer.set_formatting(&self.prefix_formatting);
         cmd_buffer.print(&self.prefix);
         cmd_buffer.reset_formatting();
@@ -63,28 +45,5 @@ impl Default for LabelStyle {
             prefix_formatting: Formatting::default().bold().foreground_color(Color::Green),
             prompt_formatting: Formatting::default().bold(),
         }
-    }
-}
-
-impl Command for LabelStyle {
-    fn write_ansi(&self, f: &mut impl std::fmt::Write) -> std::fmt::Result {
-        self.prefix_formatting.write_ansi(f)?;
-        Print(&self.prefix).write_ansi(f)?;
-        Formatting::reset().write_ansi(f)?;
-        Print(" ").write_ansi(f)?;
-        self.prompt_formatting.write_ansi(f)?;
-
-        Ok(())
-    }
-
-    #[cfg(windows)]
-    fn execute_winapi(&self) -> Result<()> {
-        self.prefix_formatting.execute_winapi()?;
-        Print(&self.prefix).execute_winapi()?;
-        Formatting::reset().execute_winapi()?;
-        Print(" ").execute_winapi()?;
-        self.prompt_formatting.execute_winapi()?;
-
-        Ok(())
     }
 }

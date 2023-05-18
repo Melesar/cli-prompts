@@ -1,8 +1,7 @@
-use crossterm::event::{Event, KeyCode};
-
 use super::Prompt;
 use crate::{
     engine::CommandBuffer,
+    input::Key,
     prompts::{AbortReason, EventOutcome},
     style::{Formatting, InputStyle, LabelStyle},
 };
@@ -56,62 +55,64 @@ where
     F: Fn(&str) -> Result<T, String>,
 {
     fn draw(&self, commands: &mut impl CommandBuffer) {
-        self.style.label_style.print_cmd(&self.label, commands);
+        self.style.label_style.print(&self.label, commands);
 
         if let Some(error) = self.error.as_ref() {
-            self.style.error_formatting.print_cmd(format!("[{}]", error), commands);
+            self.style
+                .error_formatting
+                .print(format!("[{}]", error), commands);
         } else if self.is_submitted {
-            self.style.submitted_formatting.print_cmd(&self.input, commands);
+            self.style
+                .submitted_formatting
+                .print(&self.input, commands);
         } else if self.is_first_input && self.input.len() > 0 {
-            self.style.default_value_formatting.print_cmd(format!("[{}]", self.input), commands);
+            self.style
+                .default_value_formatting
+                .print(format!("[{}]", self.input), commands);
         } else if !self.is_first_input {
-            self.style.input_formatting.print_cmd(&self.input, commands);
+            self.style.input_formatting.print(&self.input, commands);
         }
 
         if let Some(help_message) = self.help_message.as_ref() {
-            self.style.help_message_formatting.print_cmd(format!("[{}]", help_message), commands);
+            self.style
+                .help_message_formatting
+                .print(format!("[{}]", help_message), commands);
         }
     }
 
-    fn on_event(&mut self, evt: Event) -> EventOutcome<T> {
+    fn on_key_pressed(&mut self, key: Key) -> EventOutcome<T> {
         let is_first_input = self.is_first_input;
-        match evt {
-            Event::Key(k) => {
-                self.is_first_input = false;
-                match k.code {
-                    KeyCode::Char(c) => {
-                        if is_first_input {
-                            self.input.clear();
-                        }
-                        self.error = None;
-                        self.input.push(c);
+        match key {
+            Key::Char(c) => {
+                if is_first_input {
+                    self.input.clear();
+                }
+                self.error = None;
+                self.input.push(c);
+                EventOutcome::Continue
+            }
+            Key::Backspace => {
+                if is_first_input {
+                    self.input.clear();
+                }
+                self.error = None;
+                self.input.pop();
+                EventOutcome::Continue
+            }
+            Key::Enter => {
+                self.error = (self.validation)(&self.input).err();
+                match self.error {
+                    Some(_) => {
+                        self.input.clear();
                         EventOutcome::Continue
                     }
-                    KeyCode::Backspace => {
-                        if is_first_input {
-                            self.input.clear();
-                        }
-                        self.error = None;
-                        self.input.pop();
-                        EventOutcome::Continue
+                    None => {
+                        self.is_submitted = true;
+                        EventOutcome::Done((self.validation)(&self.input).unwrap())
                     }
-                    KeyCode::Enter => {
-                        self.error = (self.validation)(&self.input).err();
-                        match self.error {
-                            Some(_) => {
-                                self.input.clear();
-                                EventOutcome::Continue
-                            }
-                            None => {
-                                self.is_submitted = true;
-                                EventOutcome::Done((self.validation)(&self.input).unwrap())
-                            }
-                        }
-                    }
-                    KeyCode::Esc => EventOutcome::Abort(AbortReason::Interrupt),
-                    _ => EventOutcome::Continue,
                 }
             }
+            Key::Esc => EventOutcome::Abort(AbortReason::Interrupt),
             _ => EventOutcome::Continue,
         }
     }

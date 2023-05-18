@@ -1,6 +1,9 @@
-use crossterm::event::{Event, KeyCode};
-
-use crate::{engine::CommandBuffer, prompts::{options::Options, EventOutcome, AbortReason, Prompt}, style::SelectionStyle};
+use crate::{
+    engine::CommandBuffer,
+    input::Key,
+    prompts::{options::Options, AbortReason, EventOutcome, Prompt},
+    style::SelectionStyle,
+};
 
 use super::multioption_prompt::MultiOptionPrompt;
 
@@ -83,29 +86,29 @@ impl<T> MultiOptionPrompt<T> for Selection<T> {
         cmd_buffer: &mut impl CommandBuffer,
     ) {
         if is_selected {
-            self.style.selected_marker.print_cmd(cmd_buffer);
-            self.style .selected_option_formatting.print_cmd(option_label, cmd_buffer);
+            self.style.selected_marker.print(cmd_buffer);
+            self.style
+                .selected_option_formatting
+                .print(option_label, cmd_buffer);
         } else {
-            self.style.not_selected_marker.print_cmd(cmd_buffer);
-            self.style.option_formatting.print_cmd(option_label, cmd_buffer)
+            self.style.not_selected_marker.print(cmd_buffer);
+            self.style
+                .option_formatting
+                .print(option_label, cmd_buffer)
         }
     }
 
-    fn draw_header(
-        &self,
-        commands: &mut impl CommandBuffer,
-        is_submitted: bool,
-    )  {
+    fn draw_header(&self, commands: &mut impl CommandBuffer, is_submitted: bool) {
         if is_submitted {
             let selected_option_index = self.options.filtered_options()[self.current_selection];
             let selected_option = &self.options.transformed_options()[selected_option_index];
             self.style
                 .submitted_formatting
-                .print_cmd(selected_option, commands);
+                .print(selected_option, commands);
         } else {
             self.style
                 .filter_formatting
-                .print_cmd(&self.current_filter, commands);
+                .print(&self.current_filter, commands);
         }
     }
 }
@@ -116,45 +119,39 @@ impl<T> Prompt<T> for Selection<T> {
             &self.label,
             self.is_submitted,
             &self.style.label_style,
-            commands
+            commands,
         )
     }
 
-    fn on_event(&mut self, evt: Event) -> EventOutcome<T> {
-        match evt {
-            Event::Key(key) => match key.code {
-                KeyCode::Char(c) => {
-                    self.current_filter.push(c);
-                    self.options.filter(&self.current_filter);
-                    self.current_selection = 0;
-                    EventOutcome::Continue
-                }
-                KeyCode::Backspace if self.current_filter.len() > 0 => {
-                    self.current_filter.pop();
-                    self.options.filter(&self.current_filter);
-                    self.current_selection = 0;
-                    EventOutcome::Continue
-                }
-                KeyCode::Up if self.current_selection > 0 => {
-                    self.current_selection -= 1;
-                    EventOutcome::Continue
-                }
-                KeyCode::Down
-                    if self.current_selection < self.options.filtered_options().len() - 1 =>
-                {
-                    self.current_selection += 1;
-                    EventOutcome::Continue
-                }
-                KeyCode::Enter if self.options.filtered_options().len() > 0 => {
-                    self.is_submitted = true;
-                    let selected_option_index =
-                        self.options.filtered_options()[self.current_selection];
-                    let result = self.options.all_options_mut().remove(selected_option_index);
-                    EventOutcome::Done(result)
-                }
-                KeyCode::Esc => EventOutcome::Abort(AbortReason::Interrupt),
-                _ => EventOutcome::Continue,
-            },
+    fn on_key_pressed(&mut self, key: Key) -> EventOutcome<T> {
+        match key {
+            Key::Char(c) => {
+                self.current_filter.push(c);
+                self.options.filter(&self.current_filter);
+                self.current_selection = 0;
+                EventOutcome::Continue
+            }
+            Key::Backspace if self.current_filter.len() > 0 => {
+                self.current_filter.pop();
+                self.options.filter(&self.current_filter);
+                self.current_selection = 0;
+                EventOutcome::Continue
+            }
+            Key::Up if self.current_selection > 0 => {
+                self.current_selection -= 1;
+                EventOutcome::Continue
+            }
+            Key::Down if self.current_selection < self.options.filtered_options().len() - 1 => {
+                self.current_selection += 1;
+                EventOutcome::Continue
+            }
+            Key::Enter if self.options.filtered_options().len() > 0 => {
+                self.is_submitted = true;
+                let selected_option_index = self.options.filtered_options()[self.current_selection];
+                let result = self.options.all_options_mut().remove(selected_option_index);
+                EventOutcome::Done(result)
+            }
+            Key::Esc => EventOutcome::Abort(AbortReason::Interrupt),
             _ => EventOutcome::Continue,
         }
     }

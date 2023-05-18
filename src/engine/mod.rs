@@ -3,7 +3,7 @@ mod crossterm;
 pub use self::crossterm::CrosstermEngine;
 
 use std::io::Result;
-use crate::style::Formatting;
+use crate::{style::Formatting, input::Key};
 
 pub trait Engine {
     type Buffer: CommandBuffer + Clear;
@@ -12,6 +12,8 @@ pub trait Engine {
 
     fn render(&mut self, render_commands: &Self::Buffer) -> Result<()>;
     fn finish_rendering(&mut self) -> Result<()>;
+
+    fn read_key(&self) -> Result<Key>;
 }
 
 pub trait Clear {
