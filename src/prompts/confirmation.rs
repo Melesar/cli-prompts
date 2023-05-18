@@ -1,13 +1,8 @@
-use super::{EventOutcome, Prompt};
-use crate::style::ConfirmationStyle;
+use crossterm::event::{KeyCode, Event};
 
-use crossterm::{
-    cursor::{position, MoveTo},
-    event::{Event, KeyCode},
-    queue,
-    terminal::{Clear, ClearType},
-};
-use std::io::Write;
+use crate::{style::ConfirmationStyle, prompts::EventOutcome, engine::CommandBuffer};
+
+use super::Prompt;
 
 pub struct Confirmation {
     label: String,
@@ -40,24 +35,18 @@ impl Confirmation {
 }
 
 impl Prompt<bool> for Confirmation {
-    fn draw<W: Write>(&self, buffer: &mut W) -> Result<(), std::io::Error> {
-        queue!(
-            buffer,
-            Clear(ClearType::CurrentLine),
-            MoveTo(0, position()?.1)
-        )?;
-
-        self.style.label_style.print(
-            buffer,
+    fn draw(&self, commands: &mut impl CommandBuffer) {
+        self.style.label_style.print_cmd(
             format!(
                 "{} [{y}/{n}]",
                 self.label,
                 y = if self.default_positive { 'Y' } else { 'y' },
                 n = if !self.default_positive { 'N' } else { 'n' },
             ),
-        )?;
+            commands
+        );
 
-        let mut result : String = if let Some(is_positive) = self.selected_option.as_ref() {
+        let result : String = if let Some(is_positive) = self.selected_option.as_ref() {
             if *is_positive {
                 "Yes".into()
             } else {
@@ -67,18 +56,13 @@ impl Prompt<bool> for Confirmation {
             String::new()
         };
 
-        if self.is_submitted { result += "\r\n"; }
-
         let formatting = if self.is_submitted {
             &self.style.submitted_formatting
         } else {
             &self.style.input_formatting
         };
 
-        formatting.print(buffer, result)?;
-
-        buffer.flush()?;
-        Ok(())
+        formatting.print_cmd(result, commands);
     }
 
     fn on_event(&mut self, evt: Event) -> EventOutcome<bool> {

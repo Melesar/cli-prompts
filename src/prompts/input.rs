@@ -1,13 +1,11 @@
-use crossterm::{
-    cursor::{position, MoveTo},
-    event::{Event, KeyCode},
-    queue,
-    terminal::{Clear, ClearType},
-};
-use std::io::Write;
+use crossterm::event::{Event, KeyCode};
 
-use super::{AbortReason, EventOutcome, Prompt};
-use crate::style::InputStyle;
+use super::Prompt;
+use crate::{
+    engine::CommandBuffer,
+    prompts::{AbortReason, EventOutcome},
+    style::{Formatting, InputStyle, LabelStyle},
+};
 
 pub struct Input<F> {
     label: String,
@@ -19,7 +17,6 @@ pub struct Input<F> {
     validation: F,
     style: InputStyle,
 }
-
 
 impl<F, T> Input<F>
 where
@@ -54,38 +51,29 @@ where
     }
 }
 
-impl<TOut, F> Prompt<TOut> for Input<F>
+impl<T, F> Prompt<T> for Input<F>
 where
-    F: Fn(&str) -> Result<TOut, String>,
+    F: Fn(&str) -> Result<T, String>,
 {
-    fn draw<W: Write>(&self, buffer: &mut W) -> Result<(), std::io::Error> {
-        queue!(
-            buffer,
-            Clear(ClearType::CurrentLine),
-            MoveTo(0, position()?.1)
-        )?;
-
-        self.style.label_style.print(buffer, &self.label)?;
+    fn draw(&self, commands: &mut impl CommandBuffer) {
+        self.style.label_style.print_cmd(&self.label, commands);
 
         if let Some(error) = self.error.as_ref() {
-            self.style.error_formatting.print(buffer, format!("[{}]", error))?;
+            self.style.error_formatting.print_cmd(format!("[{}]", error), commands);
         } else if self.is_submitted {
-            self.style.submitted_formatting.print(buffer, format!("{}\r\n", self.input))?;
+            self.style.submitted_formatting.print_cmd(&self.input, commands);
         } else if self.is_first_input && self.input.len() > 0 {
-            self.style.default_value_formatting.print(buffer, format!("[{}]", self.input))?;
+            self.style.default_value_formatting.print_cmd(format!("[{}]", self.input), commands);
         } else if !self.is_first_input {
-            self.style.input_formatting.print(buffer, &self.input)?;
+            self.style.input_formatting.print_cmd(&self.input, commands);
         }
 
         if let Some(help_message) = self.help_message.as_ref() {
-            self.style.help_message_formatting.print(buffer, format!("[{}]", help_message))?;
+            self.style.help_message_formatting.print_cmd(format!("[{}]", help_message), commands);
         }
-
-        buffer.flush()?;
-        Ok(())
     }
 
-    fn on_event(&mut self, evt: Event) -> super::EventOutcome<TOut> {
+    fn on_event(&mut self, evt: Event) -> EventOutcome<T> {
         let is_first_input = self.is_first_input;
         match evt {
             Event::Key(k) => {
@@ -128,4 +116,3 @@ where
         }
     }
 }
-

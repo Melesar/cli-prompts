@@ -1,14 +1,8 @@
-use crossterm::{
-    event::KeyCode,
-    queue,
-    style::{Attribute, Color, Print, SetAttribute, SetForegroundColor},
-    terminal::{Clear, ClearType},
-};
+use crossterm::event::{Event, KeyCode};
 
-use crate::{prompts::*, style::SelectionStyle};
+use crate::{engine::CommandBuffer, prompts::{options::Options, EventOutcome, AbortReason, Prompt}, style::SelectionStyle};
 
-use super::multi_option_prompt::MultiOptionPrompt;
-use super::Options;
+use super::multioption_prompt::MultiOptionPrompt;
 
 const DEFAULT_OPTIONS_COUNT: u16 = 5;
 
@@ -50,6 +44,11 @@ impl<T> Selection<T> {
         self
     }
 
+    pub fn style(mut self, style: SelectionStyle) -> Self {
+        self.style = style;
+        self
+    }
+
     fn new_internal(label: String, options: Options<T>) -> Self {
         Selection {
             label,
@@ -76,49 +75,48 @@ impl<T> MultiOptionPrompt<T> for Selection<T> {
         self.current_selection
     }
 
-    fn draw_option<W: Write>(
+    fn draw_option(
         &self,
-        buffer: &mut W,
         _: usize,
         option_label: &str,
         is_selected: bool,
-    ) -> Result<(), std::io::Error> {
-        queue!(buffer, Clear(ClearType::CurrentLine))?;
-
-        let formatting = if is_selected {
-            queue!(buffer, &self.style.marker, Print(" "))?;
-            &self.style.selected_option_formatting
+        cmd_buffer: &mut impl CommandBuffer,
+    ) {
+        if is_selected {
+            self.style.selected_marker.print_cmd(cmd_buffer);
+            self.style .selected_option_formatting.print_cmd(option_label, cmd_buffer);
         } else {
-            queue!(buffer, Print("  "))?;
-            &self.style.option_formatting
-        };
-
-
-        formatting.print(buffer, option_label)
+            self.style.not_selected_marker.print_cmd(cmd_buffer);
+            self.style.option_formatting.print_cmd(option_label, cmd_buffer)
+        }
     }
 
-    fn draw_header<W: Write>(
+    fn draw_header(
         &self,
-        buffer: &mut W,
+        commands: &mut impl CommandBuffer,
         is_submitted: bool,
-    ) -> Result<(), std::io::Error> {
+    )  {
         if is_submitted {
             let selected_option_index = self.options.filtered_options()[self.current_selection];
             let selected_option = &self.options.transformed_options()[selected_option_index];
-            self.style.submitted_formatting.print(buffer, selected_option)
+            self.style
+                .submitted_formatting
+                .print_cmd(selected_option, commands);
         } else {
-            self.style.filter_formatting.print(buffer, &self.current_filter)
+            self.style
+                .filter_formatting
+                .print_cmd(&self.current_filter, commands);
         }
     }
 }
 
 impl<T> Prompt<T> for Selection<T> {
-    fn draw<W: Write>(&self, buffer: &mut W) -> Result<(), std::io::Error> {
+    fn draw(&self, commands: &mut impl CommandBuffer) {
         self.draw_multioption(
-            buffer,
             &self.label,
             self.is_submitted,
             &self.style.label_style,
+            commands
         )
     }
 

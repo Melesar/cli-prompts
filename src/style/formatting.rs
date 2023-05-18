@@ -1,5 +1,7 @@
 use std::io::{Result, Write};
 
+use crate::engine::CommandBuffer;
+
 use super::color::Color;
 use crossterm::{
     queue,
@@ -16,23 +18,11 @@ pub enum FormattingOption {
     CrossedOut,
 }
 
-impl From<FormattingOption> for crossterm::style::Attribute {
-    fn from(value: FormattingOption) -> Self {
-        match value {
-            FormattingOption::Reset => Attribute::Reset,
-            FormattingOption::Bold => Attribute::Bold,
-            FormattingOption::Italic => Attribute::Italic,
-            FormattingOption::Underline => Attribute::Underlined,
-            FormattingOption::CrossedOut => Attribute::CrossedOut,
-        }
-    }
-}
-
 #[derive(Clone)]
 pub struct Formatting {
-    foreground_color: Option<Color>,
-    background_color: Option<Color>,
-    text_formatting: Vec<FormattingOption>,
+    pub foreground_color: Option<Color>,
+    pub background_color: Option<Color>,
+    pub text_formatting: Vec<FormattingOption>,
 }
 
 impl Default for Formatting {
@@ -89,6 +79,12 @@ impl Formatting {
     {
         queue!(buffer, self, Print(text.into()), Self::reset())
     }
+
+   pub fn print_cmd(&self, text: impl Into<String>, cmd_buffer: &mut impl CommandBuffer) {
+        cmd_buffer.set_formatting(self);
+        cmd_buffer.print(&text.into());
+        cmd_buffer.reset_formatting();
+   }
 }
 
 impl Command for Formatting {

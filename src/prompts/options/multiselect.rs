@@ -1,14 +1,12 @@
-use std::io::Write;
+use crossterm::event::{Event, KeyCode};
 
-use crossterm::{
-    event::{Event, KeyCode},
-    queue,
-    style::{Attribute, Color, Print, SetAttribute, SetForegroundColor},
+use crate::{
+    engine::CommandBuffer,
+    prompts::{options::Options, AbortReason, EventOutcome, Prompt},
+    style::MultiselectionStyle,
 };
 
-use crate::{prompts::{EventOutcome, Prompt, AbortReason}, style::MultiselectionStyle};
-
-use super::{multi_option_prompt::MultiOptionPrompt, Options};
+use super::multioption_prompt::MultiOptionPrompt;
 
 const DEFAUTL_MAX_OPTIONS: u16 = 5;
 const DEFAULT_HELP_MESSAGE: &str = "Space to select, enter to submit";
@@ -79,65 +77,52 @@ impl<T> MultiOptionPrompt<T> for Multiselect<T> {
         self.currently_selected_index
     }
 
-    fn draw_option<W: Write>(
+    fn draw_option(
         &self,
-        buffer: &mut W,
         option_index: usize,
         option_label: &str,
         is_selected: bool,
-    ) -> Result<(), std::io::Error> {
-        if is_selected {
-            queue!(buffer, SetForegroundColor(Color::DarkGreen))?;
-        }
-        queue!(buffer, Print("["))?;
-        if self.selected_options.contains(&option_index) {
-            queue!(buffer, Print("x"))?;
-        } else {
-            queue!(buffer, Print(" "))?;
-        }
-        queue!(buffer, Print("] "))?;
-        queue!(buffer, Print(option_label))?;
-
-        if is_selected {
-            queue!(buffer, SetForegroundColor(Color::Reset))?;
-        }
-
-        Ok(())
+        commands: &mut impl CommandBuffer,
+    ) {
+        let is_option_selected = self.selected_options.contains(&option_index);
+        self.style
+            .print_option(option_label, is_option_selected, is_selected, commands);
     }
 
-    fn draw_header<W: Write>(&self, buffer: &mut W, is_submitted: bool) -> Result<(), std::io::Error> {
+    fn draw_header(&self, commands: &mut impl CommandBuffer, is_submitted: bool) {
         if is_submitted {
-            queue!(buffer, SetForegroundColor(Color::DarkGreen))?;
+            commands.set_formatting(&self.style.submitted_formatting);
             for (i, selected_index) in self.selected_options.iter().enumerate() {
                 let selected_option = &self.options.transformed_options()[*selected_index];
-                queue!(buffer, Print(selected_option))?;
+                commands.print(selected_option);
 
                 if i < self.selected_options.len() - 1 {
-                    queue!(buffer, Print(", "))?;
+                    commands.print(", ");
                 }
             }
-            queue!(buffer, SetForegroundColor(Color::Reset))?;
+            commands.reset_formatting();
         } else {
-            queue!(buffer, Print(&self.filter), Print(" "))?;
+            commands.print(&self.filter);
+            commands.print(" ");
             if let Some(help_message) = self.help_message.as_ref() {
-                queue!(
-                    buffer,
-                    SetForegroundColor(Color::DarkGreen),
-                    Print("["),
-                    Print(help_message),
-                    Print("]"),
-                    SetForegroundColor(Color::Reset)
-                )?;
+                commands.set_formatting(&self.style.help_message_formatting);
+                commands.print("[");
+                commands.print(help_message);
+                commands.print("]");
+                commands.reset_formatting();
             }
         }
-
-        Ok(())
     }
 }
 
 impl<T> Prompt<Vec<T>> for Multiselect<T> {
-    fn draw<W: std::io::Write>(&self, buffer: &mut W) -> Result<(), std::io::Error>{
-        self.draw_multioption(buffer, &self.label, self.is_submitted, &self.style.label_style)
+    fn draw(&self, commands: &mut impl CommandBuffer) {
+        self.draw_multioption(
+            &self.label,
+            self.is_submitted,
+            &self.style.label_style,
+            commands,
+        );
     }
 
     fn on_event(&mut self, evt: Event) -> EventOutcome<Vec<T>> {
@@ -204,7 +189,7 @@ impl<T> Prompt<Vec<T>> for Multiselect<T> {
                     }
 
                     EventOutcome::Done(result)
-                },
+                }
                 KeyCode::Esc => EventOutcome::Abort(AbortReason::Interrupt),
                 _ => EventOutcome::Continue,
             },

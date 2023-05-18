@@ -1,7 +1,8 @@
 use std::io::Result;
 
 use cli_prompts::{
-    prompts::{Confirmation, DisplayPrompt, Input},
+    DisplayPrompt,
+    prompts::{Confirmation, Input},
     style::{Color, ConfirmationStyle, Formatting, InputStyle, LabelStyle},
 };
 

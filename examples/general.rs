@@ -1,6 +1,7 @@
-use std::io::stdout;
-
-use cli_prompts::prompts::{Confirmation, DisplayPrompt, Input, Multiselect, Selection};
+use cli_prompts::{
+    prompts::{Confirmation, Input, Multiselect, Selection},
+    DisplayPrompt,
+};
 
 #[derive(Debug)]
 enum CarModel {

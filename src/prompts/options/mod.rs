@@ -1,6 +1,6 @@
 pub mod multiselect;
 pub mod selection;
-pub mod multi_option_prompt;
+pub mod multioption_prompt;
 
 pub struct Options<T> {
     all_options: Vec<T>,

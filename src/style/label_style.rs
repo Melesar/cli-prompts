@@ -1,5 +1,7 @@
 use std::io::{Write, Result};
 
+use crate::engine::CommandBuffer;
+
 use super::{Color, Formatting};
 use crossterm::{style::{Print, SetAttribute, Attribute}, Command, queue};
 
@@ -39,6 +41,18 @@ impl LabelStyle {
             Formatting::reset(),
             Print(" "),
         )
+    }
+
+    pub fn print_cmd(&self, text: impl Into<String>, cmd_buffer: &mut impl CommandBuffer) {
+        cmd_buffer.set_formatting(&self.prefix_formatting);
+        cmd_buffer.print(&self.prefix);
+        cmd_buffer.reset_formatting();
+        cmd_buffer.print(" ");
+        cmd_buffer.set_formatting(&self.prompt_formatting);
+        cmd_buffer.print(&text.into());
+        cmd_buffer.print(":");
+        cmd_buffer.reset_formatting();
+        cmd_buffer.print(" ");
     }
 }
 
