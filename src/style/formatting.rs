@@ -1,5 +1,3 @@
-use std::io::{Result, Write};
-
 use crate::engine::CommandBuffer;
 
 use super::color::Color;

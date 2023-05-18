@@ -3,7 +3,7 @@ use crate::{
     engine::CommandBuffer,
     input::Key,
     prompts::{AbortReason, EventOutcome},
-    style::{Formatting, InputStyle, LabelStyle},
+    style::InputStyle,
 };
 
 pub struct Input<F> {
