@@ -2,6 +2,8 @@
 
 Create interactive input prompts like in [GitHub's CLI tool](https://cli.github.com/).
 
+![presentation](doc/presentation.gif)
+
 ## Features
 
 - Cross-platform;
