@@ -1,18 +1,16 @@
 use std::io::{Result, Write};
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode, is_raw_mode_enabled};
-
 
 use crossterm::{
     cursor::{position, MoveTo, MoveToPreviousLine},
     event::{read, Event},
     execute, queue,
-    style::{Attribute, Attributes, Colors, Print, SetAttributes, SetColors, Color as Cc},
-    terminal::{Clear, ClearType},
+    style::{Attribute, Attributes, Color as Cc, Colors, Print, SetAttributes, SetColors},
+    terminal::{disable_raw_mode, enable_raw_mode, is_raw_mode_enabled, Clear, ClearType},
 };
 
 use crate::{
     input::Key,
-    style::{Formatting, FormattingOption, Color},
+    style::{Color, Formatting, FormattingOption}
 };
 
 use super::{CommandBuffer, Engine};
@@ -48,11 +46,8 @@ impl<W: Write> Engine for CrosstermEngine<W> {
     }
 
     fn render(&mut self, render_commands: &Self::Buffer) -> Result<()> {
-        for i in 0..self.previous_line_count {
-            queue!(self.buffer, Clear(ClearType::CurrentLine))?;
-            if i < self.previous_line_count - 1 {
-                queue!(self.buffer, MoveToPreviousLine(1))?;
-            }
+        for _ in 0..self.previous_line_count - 1 {
+            queue!(self.buffer, MoveToPreviousLine(1))?;
         }
 
         queue!(self.buffer, MoveTo(0, position()?.1))?;
@@ -60,6 +55,8 @@ impl<W: Write> Engine for CrosstermEngine<W> {
         for cmd in &render_commands.commands {
             cmd.execute(&mut self.buffer)?;
         }
+
+        queue!(self.buffer, Clear(ClearType::FromCursorDown))?;
 
         self.previous_line_count = render_commands.lines_count;
         self.buffer.flush()
@@ -151,7 +148,7 @@ trait Command<W: Write> {
 
 impl<W: Write> Command<W> for PrintCommand {
     fn execute(&self, buffer: &mut W) -> Result<()> {
-        queue!(buffer, Print(&self.0))
+        queue!(buffer, Print(&self.0), Clear(ClearType::UntilNewLine))
     }
 }
 
