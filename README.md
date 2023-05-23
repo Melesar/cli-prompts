@@ -26,14 +26,16 @@ More elaborate examples can be found in the [examples](examples) directory
         DisplayPrompt
     }
 
-    let name : Result<String, AbortReason> = Input::new("Enter your name", name_validation)
-        .default_value("John")
-        .help_message("Please provide your real name")
-        .display();
+    fn show_input_prompt() {
+      let name : Result<String, AbortReason> = Input::new("Enter your name", name_validation)
+          .default_value("John")
+          .help_message("Please provide your real name")
+          .display();
 
-    match name {
-        Ok(n) => println!("The name is {}", n),
-        Err(abort_reason) => println!("Input was aborted because of {:?}", abort_reason),
+      match name {
+          Ok(n) => println!("The name is {}", n),
+          Err(abort_reason) => println!("Input was aborted because of {:?}", abort_reason),
+      }
     }
 
     fn name_validation(name: &str) -> Result<String, String> {
