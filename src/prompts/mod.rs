@@ -5,7 +5,6 @@
 //! this trait, you will be able to call `display()` on your prompt object which 
 //! handle the rest
 
-
 mod confirmation;
 mod input;
 mod options;
@@ -104,7 +103,13 @@ pub trait Prompt<TOut> {
     fn on_key_pressed(&mut self, key: Key) -> EventOutcome<TOut>;
 }
 
+/// A trait that is implemented for every type that implements `Prompt`. Provides a convenient way
+/// to display a prompt on the screen, handle the input, raw mode, etc.
 pub trait DisplayPrompt<T> {
+
+    /// Draws the prompt on the screen and handles the input.
+    /// - Returns `Ok(T)` if the prompt is completed successfully.
+    /// - Returns `Err(AbortReason)` if it failed. Check the `AbortReason` to find out why
     fn display(self) -> Result<T, AbortReason>;
 }
 

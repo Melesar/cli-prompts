@@ -6,6 +6,45 @@ use crate::{
     style::InputStyle,
 };
 
+/// This is a normal text input prompt with the following features:
+/// - Custom label 
+/// - Validation of the input with error reporting
+/// - Transformation of the text input to arbitrary Rust type
+/// - Optional default value
+/// - Optional help message
+/// - Customizable colors and formatting
+///
+/// ```rust
+/// use cli_prompts::{
+///     prompts::{Input, AbortReason::Error},
+///     style::{InputStyle, Formatting},
+///     DisplayPrompt
+/// };
+///
+/// fn validate_and_transform(input: &str) -> Result<u16, String> {
+///     input
+///       .parse::<u16>()
+///       .map_err(|e| "Provided input is not a valid time of the day".into())
+///       .and_then(|n| if n <= 24 { Ok(n) } else { Err("Provided input is not a valid time of the day".into()) })
+/// }
+///
+/// fn main() {
+///     let input = Input::new("At what time do you usually eat lunch?", validate_and_transform)
+///         .default_value("12")
+///         .help_message("Enter an hour of the day as a number from 0 to 24")
+///         .style(InputStyle::default().default_value_formatting(Formatting::default().bold()));
+///
+///     let lunch_time = input.display();
+///     match lunch_time {
+///         Ok(time) => println!("You eat lunch at {} o'clock", time),
+///         Err(abort_reason) => match abort_reason {
+///             Interrupt => println!("The prompt was interrupted by pressing the ESC key"),
+///             Error(err) => println!("I/O error has occured: {:?}", err),
+///         }
+///     }
+///     
+/// }
+/// ```
 pub struct Input<F> {
     label: String,
     input: String,
