@@ -32,7 +32,9 @@ use crate::{
 ///     let input = Input::new("At what time do you usually eat lunch?", validate_and_transform)
 ///         .default_value("12")
 ///         .help_message("Enter an hour of the day as a number from 0 to 24")
-///         .style(InputStyle::default().default_value_formatting(Formatting::default().bold()));
+///         .style(InputStyle::default()
+///                   .default_value_formatting(Formatting::default().bold())
+///          );
 ///
 ///     let lunch_time = input.display();
 ///     match lunch_time {
@@ -60,6 +62,11 @@ impl<F, T> Input<F>
 where
     F: Fn(&str) -> Result<T, String>,
 {
+    /// Constructs an input prompt with a given label and a validation function
+    /// The function serves both as validator and transformer: it should return `Ok`
+    /// of the arbitrary type `T` if validation passed and `Err(String)` if it failed. 
+    /// The containing String will be displayed as an error message and the prompt will continue
+    /// until this function returns Ok
     pub fn new(label: impl Into<String>, validation: F) -> Self {
         Self {
             label: label.into(),
@@ -73,16 +80,21 @@ where
         }
     }
 
+    /// Sets a help message which will be displayed after the input string
+    /// until the prompt is completed
     pub fn help_message<S: Into<String>>(mut self, message: S) -> Self {
         self.help_message = Some(message.into());
         self
     }
 
+    /// Sets the default value for the prompt. It is cleared once any key
+    /// is pressed other than Enter.
     pub fn default_value<S: Into<String>>(mut self, val: S) -> Self {
         self.input = val.into();
         self
     }
 
+    /// Sets the style for the prompt
     pub fn style(mut self, style: InputStyle) -> Self {
         self.style = style;
         self
