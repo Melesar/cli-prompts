@@ -1,3 +1,11 @@
+//! The module that contains the high-level abstractions for the prompts. 
+//!
+//! To implement a new prompt, you need to implement the `Prompt` trait, which 
+//! requires a method to draw the prompt and to react to input. Having implemented
+//! this trait, you will be able to call `display()` on your prompt object which 
+//! handle the rest
+
+
 mod confirmation;
 mod input;
 mod options;
@@ -14,21 +22,85 @@ use crate::{
     input::Key,
 };
 
+/// Describes the reason for prompt abortion
 #[derive(Debug)]
 pub enum AbortReason {
+
+    /// The prompt was interrupted by the user
     Interrupt,
+
+    /// The error occured with I/O
     Error(std::io::Error),
 }
 
+/// This describes the final result of the prompt
 #[derive(Debug)]
 pub enum EventOutcome<T> {
+
+    /// The prompt has successfully completed.
+    /// The inner field will contain the result.
     Done(T),
+
+    /// This signals that the prompt hasn't completed and should continue
     Continue,
+
+    /// Prompt has been aborted
     Abort(AbortReason),
 }
 
+/// The trait for defining interactive prompts.
+///
+/// ```rust
+///use cli_prompts::{
+///   prompts::{Prompt, EventOutcome, AbortReason},
+///   engine::CommandBuffer,
+///   style::{Formatting, Color},
+///   input::Key,
+///};
+///
+///struct MyPrompt {
+///   name: String
+///}
+///
+/// impl Prompt<String> for MyPrompt {
+///    fn draw(&self, commands: &mut impl CommandBuffer) {
+///       commands.print("Input your name: ");
+///       commands.set_formatting(&Formatting::default().foreground_color(Color::Green));
+///       commands.print(&self.name);
+///       commands.reset_formatting();
+///    }
+///
+///    fn on_key_pressed(&mut self, key: Key) -> EventOutcome<String> {
+///           match key {
+///               Key::Char(c) => {
+///               self.name.push(c);
+///               EventOutcome::Continue
+///           },
+///           Key::Backspace => {
+///               self.name.pop();
+///               EventOutcome::Continue
+///           },
+///           Key::Enter => EventOutcome::Done(self.name.clone()),
+///           Key::Esc => EventOutcome::Abort(AbortReason::Interrupt),
+///           _ => EventOutcome::Continue,
+///       }
+///    }
+/// }
+/// ```
 pub trait Prompt<TOut> {
+
+    /// Defines how to draw the prompt with a set of commands.
+    /// The goal of this method is to populate the `commands` buffer
+    /// with a set of commands that will draw your prompt to the screen.
     fn draw(&self, commands: &mut impl CommandBuffer);
+
+    /// This should handle the keyboard key presses. Should return the 
+    /// outcome of the keypress:
+    /// - EventOutcome::Continue - the input was handled and the prompt should continue displaying
+    /// - EventOutcome::Done(TOut) - the prompt has successfully completed. Pass the result as the
+    /// enum's field
+    /// - EventOutcome::Abort(AbortReason) - the prompt has finished abruptly. Specify a reason in
+    /// the enum's field
     fn on_key_pressed(&mut self, key: Key) -> EventOutcome<TOut>;
 }
 

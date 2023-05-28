@@ -22,7 +22,7 @@
 //!     use cli_prompts::{
 //!         prompts::{Input, AbortReason},
 //!         DisplayPrompt
-//!     }
+//!     };
 //! 
 //!     fn show_input_prompt() {
 //!       let name : Result<String, AbortReason> = Input::new("Enter your name", name_validation)
