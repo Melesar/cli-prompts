@@ -13,6 +13,7 @@ pub use confirmation::Confirmation;
 pub use input::Input;
 pub use options::multiselect::Multiselect;
 pub use options::selection::Selection;
+pub use options::{Options, multioption_prompt::MultiOptionPrompt};
 
 use std::io::stdout;
 
