@@ -7,7 +7,7 @@ use crate::{
 };
 
 /// This is a normal text input prompt with the following features:
-/// - Custom label 
+/// - Custom label
 /// - Validation of the input with error reporting
 /// - Transformation of the text input to arbitrary Rust type
 /// - Optional default value
@@ -16,7 +16,7 @@ use crate::{
 ///
 /// ```rust
 /// use cli_prompts::{
-///     prompts::{Input, AbortReason::Error},
+///     prompts::{Input, AbortReason::{self, Error}},
 ///     style::{InputStyle, Formatting},
 ///     DisplayPrompt
 /// };
@@ -36,7 +36,7 @@ use crate::{
 ///                   .default_value_formatting(Formatting::default().bold())
 ///          );
 ///
-///     let lunch_time = input.display();
+///     let lunch_time : Result<u16, AbortReason> = input.display();
 ///     match lunch_time {
 ///         Ok(time) => println!("You eat lunch at {} o'clock", time),
 ///         Err(abort_reason) => match abort_reason {
@@ -64,7 +64,7 @@ where
 {
     /// Constructs an input prompt with a given label and a validation function
     /// The function serves both as validator and transformer: it should return `Ok`
-    /// of the arbitrary type `T` if validation passed and `Err(String)` if it failed. 
+    /// of the arbitrary type `T` if validation passed and `Err(String)` if it failed.
     /// The containing String will be displayed as an error message and the prompt will continue
     /// until this function returns Ok
     pub fn new(label: impl Into<String>, validation: F) -> Self {
@@ -113,9 +113,7 @@ where
                 .error_formatting
                 .print(format!("[{}]", error), commands);
         } else if self.is_submitted {
-            self.style
-                .submitted_formatting
-                .print(&self.input, commands);
+            self.style.submitted_formatting.print(&self.input, commands);
         } else if self.is_first_input && self.input.len() > 0 {
             self.style
                 .default_value_formatting

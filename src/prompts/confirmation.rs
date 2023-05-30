@@ -2,6 +2,29 @@ use crate::{engine::CommandBuffer, input::Key, prompts::EventOutcome, style::Con
 
 use super::Prompt;
 
+/// A prompt that expects a "yes or no" answer.
+/// You can press 'y' or 'n' for positive or negative result.
+/// Pressing 'Enter' without any previous input will trigger the default ansewer, which is
+/// configurable
+///
+/// ```rust
+/// use cli_prompts::{
+///     prompts::{Confirmation, AbortReason},
+///     style::{ConfirmationStyle, Formatting},
+///     DisplayPrompt,
+/// };
+///
+/// fn main() {
+///     let prompt = Confirmation::new("Are you sure you want to delete this file?")
+///                     .default_positive(false)
+///                     .style(ConfirmationStyle::default());
+///     let answer : Result<bool, AbortReason> = prompt.display();
+///     match answer {
+///         Ok(is_positive) => println!("The answer is {}", is_positive),
+///         Err(abort_reason) => println!("The prompt was aborted because of {:?}", abort_reason),
+///     }
+/// }
+/// ```
 pub struct Confirmation {
     label: String,
     default_positive: bool,
@@ -11,6 +34,8 @@ pub struct Confirmation {
 }
 
 impl Confirmation {
+
+    /// Constructs a new prompt with a given label
     pub fn new<S: Into<String>>(label: S) -> Self {
         Confirmation {
             label: label.into(),
@@ -21,11 +46,13 @@ impl Confirmation {
         }
     }
 
+    /// Sets whether the default value is positive or negative
     pub fn default_positive(mut self, default_positive: bool) -> Self {
         self.default_positive = default_positive;
         self
     }
 
+    /// Sets the style of the prompt
     pub fn style(mut self, s: ConfirmationStyle) -> Self {
         self.style = s;
         self
