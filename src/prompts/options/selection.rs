@@ -9,6 +9,32 @@ use super::multioption_prompt::MultiOptionPrompt;
 
 const DEFAULT_OPTIONS_COUNT: u16 = 5;
 
+/// Prompt that allows to select one option from the given list.
+/// Supports filtering and moving the selection with arrow keys.
+///
+/// ```rust
+/// use cli_prompts::{
+///      prompts::{Selection, AbortReason},
+///      DisplayPrompt,
+/// };
+///
+/// fn main() {
+///     let social_media = [
+///         "Facebook",
+///         "Instagram",
+///         "Twitter",
+///         "Snapchat"
+///     ];
+///
+///     let prompt = Selection::new("Where you want to post?", social_media.into_iter())
+///                     .displayed_options_count(3);
+///     let selection : Result<&str, AbortReason> = prompt.display();
+///     match selection {
+///         Ok(media) => println!("Posting to {}", media),
+///         Err(abort_reason) => println!("Prompt is aborted because of {:?}", abort_reason),
+///     }
+/// }
+/// ```
 pub struct Selection<T> {
     label: String,
     options: Options<T>,
@@ -20,6 +46,9 @@ pub struct Selection<T> {
 }
 
 impl<T> Selection<T> {
+
+    /// Create new prompt with the given label and the iterator over a type that is convertable to
+    /// `String`
     pub fn new<S, I>(label: S, options: I) -> Self
     where
         T: Into<String> + Clone,
@@ -32,6 +61,9 @@ impl<T> Selection<T> {
 }
 
 impl<T> Selection<T> {
+
+    /// Create new prompt with the given label and a transformation function that will convert the
+    /// iterator items to strings
     pub fn new_with_transformation<S, I, F>(label: S, options: I, transformation: F) -> Self
     where
         S: Into<String>,
@@ -42,11 +74,13 @@ impl<T> Selection<T> {
         Self::new_internal(label.into(), options)
     }
 
+    /// Set maximum number of options that can be displayed on the screen
     pub fn displayed_options_count(mut self, options_count: u16) -> Self {
         self.max_options = options_count;
         self
     }
 
+    /// Set the prompt style
     pub fn style(mut self, style: SelectionStyle) -> Self {
         self.style = style;
         self

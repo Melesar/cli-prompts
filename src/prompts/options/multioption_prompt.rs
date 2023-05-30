@@ -1,12 +1,19 @@
 use crate::{engine::CommandBuffer, prompts::options::Options, style::LabelStyle};
 
+/// Helper trait that simplifies the implementation of the prompts that have multiple options to
+/// choose from. It handles filtering, pagination, drawing prompt header and options.
 pub trait MultiOptionPrompt<T> {
+
+    /// Maximum number of options that can be displayed on the screen
     fn max_options_count(&self) -> u16;
 
+    /// Returns the reference to the `Options` struct
     fn options(&self) -> &Options<T>;
 
+    /// Get the index of the option on the screen that is currently selected
     fn currently_selected_index(&self) -> usize;
 
+    /// Draws the option with the given index and label
     fn draw_option(
         &self,
         option_index: usize,
@@ -15,8 +22,11 @@ pub trait MultiOptionPrompt<T> {
         cmd_buffer: &mut impl CommandBuffer,
     );
 
+    /// Draws the prompt header
     fn draw_header(&self, cmd_buffer: &mut impl CommandBuffer, is_submitted: bool);
 
+    /// Draws the entire prompt with all the options. Call this from within the `Prompt::draw()`
+    /// method
     fn draw_multioption(
         &self,
         label: &str,

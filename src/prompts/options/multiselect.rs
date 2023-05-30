@@ -10,6 +10,37 @@ use super::multioption_prompt::MultiOptionPrompt;
 const DEFAUTL_MAX_OPTIONS: u16 = 5;
 const DEFAULT_HELP_MESSAGE: &str = "Space to select, enter to submit";
 
+/// Prompt that allows to select multiple options from the given list.
+/// Supports filtering and moving the selection with arrow keys.
+///
+/// ```rust
+/// use cli_prompts::{
+///     prompts::{Multiselect, AbortReason},
+///     DisplayPrompt,
+/// };
+///
+/// fn main() {
+///     let files = [
+///         "hello.txt",
+///         "image.jpg",
+///         "music.mp3",
+///         "document.pdf"
+///     ];
+///
+///     let prompt = Multiselect::new("Select files to copy", files.into_iter())
+///                     .dont_display_help_message()
+///                     .max_displayed_options(3);
+///     let selection : Result<Vec<&str>, AbortReason> = prompt.display();
+///     match selection {
+///         Ok(selected_files) => {
+///             for file in selected_files {
+///                 // Copy the file
+///             }
+///         },
+///         Err(abort_reason) => println!("Prompt is aborted because of {:?}", abort_reason),
+///     }
+/// }
+/// ```
 pub struct Multiselect<T> {
     label: String,
     options: Options<T>,
@@ -26,6 +57,9 @@ impl<T> Multiselect<T>
 where
     T: Into<String> + Clone,
 {
+
+    /// Create new prompt with the given label and the iterator over a type that is convertable to
+    /// `String`
     pub fn new<S, I>(label: S, options: I) -> Self
     where
         S: Into<String>,
@@ -37,6 +71,9 @@ where
 }
 
 impl<T> Multiselect<T> {
+    
+    /// Create new prompt with the given label and a transformation function that will convert the
+    /// iterator items to strings
     pub fn new_transformed<S, I, F>(label: S, options: I, transformation: F) -> Self
     where
         S: Into<String>,
@@ -47,16 +84,19 @@ impl<T> Multiselect<T> {
         Self::new_internal(label.into(), options)
     }
 
+    /// Set help message to be displayed after the filter string
     pub fn help_message<S: Into<String>>(mut self, message: S) -> Self {
         self.help_message = Some(message.into());
         self
     }
 
+    /// Makes prompt not to display the help message
     pub fn dont_display_help_message(mut self) -> Self {
         self.help_message = None;
         self
     }
 
+    /// Sets the maximum number of options that can be displayed on the screen
     pub fn max_displayed_options(mut self, max_options: u16) -> Self {
         self.max_displayed_options = max_options;
         self
