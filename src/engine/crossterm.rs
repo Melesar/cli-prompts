@@ -17,12 +17,14 @@ use super::{CommandBuffer, Engine};
 
 struct RawMode(bool);
 
+/// Terminal handing backend implemented with the [crossterm](https://docs.rs/crossterm/latest/crossterm/) crate
 pub struct CrosstermEngine<W: Write> {
     buffer: W,
     raw_mode: RawMode,
     previous_line_count: u16,
 }
 
+/// Command buffer for the `CrosstermEngine`
 pub struct CrosstermCommandBuffer<W: Write> {
     commands: Vec<Box<dyn Command<W>>>,
     lines_count: u16,
