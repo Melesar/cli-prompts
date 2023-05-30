@@ -1,3 +1,7 @@
+//! Module for changing the appearence of the prompts.
+//! Each prompt has its own set of styling attributes, which include text color, different
+//! formatting as well as some prompt-specific styling
+
 mod color;
 mod formatting;
 mod label_style;

@@ -1,5 +1,6 @@
 #[derive(Copy, Clone)]
 pub enum Color {
+    /// Reset the color to default value
     Reset,
 
     Black,
@@ -25,7 +26,9 @@ pub enum Color {
     White,
     Grey,
 
+    /// True-color with given RGB values
     Rgb { r: u8, g: u8, b: u8 },
+
     AnsiValue(u8),
 }
 
