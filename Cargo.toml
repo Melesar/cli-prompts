@@ -1,6 +1,6 @@
 [package]
 name = "cli-prompts"
-version = "0.1.0"
+version = "0.1.1"
 description = "Interactive prompts for the command line"
 repository = "https://github.com/Melesar/cli-prompts"
 edition = "2021"
