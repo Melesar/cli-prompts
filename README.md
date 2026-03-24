@@ -15,6 +15,7 @@ Create interactive input prompts like in [GitHub's CLI tool](https://cli.github.
   - Multiselection.
 - Customization of the colors and text style of the prompts;
 - Set of traits and helper structs that allows to implement custom prompts for your application;
+- Press `Esc` or `Ctrl+C` to abort a prompt with `AbortReason::Interrupt`;
 
 ## Getting started
 

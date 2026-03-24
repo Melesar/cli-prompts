@@ -81,7 +81,7 @@ pub enum EventOutcome<T> {
 ///               EventOutcome::Continue
 ///           },
 ///           Key::Enter => EventOutcome::Done(self.name.clone()),
-///           Key::Esc => EventOutcome::Abort(AbortReason::Interrupt),
+///           Key::Esc | Key::Ctrl('c') | Key::Ctrl('C') => EventOutcome::Abort(AbortReason::Interrupt),
 ///           _ => EventOutcome::Continue,
 ///       }
 ///    }
@@ -128,6 +128,12 @@ where
             engine.render(&commands)?;
 
             let key_pressed = engine.read_key()?;
+            if matches!(
+                key_pressed,
+                Key::Ctrl('c') | Key::Ctrl('C')
+            ) {
+                return Err(AbortReason::Interrupt);
+            }
             match self.on_key_pressed(key_pressed) {
                 EventOutcome::Done(result) => {
                     commands.clear();
